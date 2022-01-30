@@ -1,3 +1,13 @@
+
+## フローチャート
+![flow_chart](./flow_chart.drawio.svg)
+
+
+
+
+------------------
+以下メモ。あとで消します。
+
 transactionをこのテーブルにしたらいけるかと思いました
 ![draft1](./draft1.drawio.svg)
 
@@ -8,7 +18,7 @@ usersからアドレスを返す、なかったらアドレスを生成して返
 - 投げ銭コマンド
 
 データをそのままtransactionテーブルに保存
-→　書き込む内容、user_id=コマンド打った人、to_user_id：送り先、amount_in：0、amount_out：tipの量
+→ 書き込む内容、user_id=コマンド打った人、to_user_id：送り先、amount_in：0、amount_out：tipの量
 
 - 出金リクエスト
 
