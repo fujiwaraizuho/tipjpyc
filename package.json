@@ -1,0 +1,30 @@
+{
+	"name": "tipjpyc",
+	"version": "1.0.0",
+	"description": "A Twitter bot for TipJPYC",
+	"repository": "https://github.com/fujiwaraizuho/tipjpyc",
+	"author": "TipJPYC",
+	"license": "None",
+	"private": true,
+	"scripts": {
+		"start": "ts-node index.ts",
+		"dev": "nodemon index.ts",
+		"ts-node": "ts-node"
+	},
+	"dependencies": {
+		"dotenv": "^8.2.0",
+		"nodemon": "^2.0.7"
+	},
+	"devDependencies": {
+		"@types/node": "^14.14.37",
+		"@typescript-eslint/eslint-plugin": "^4.20.0",
+		"@typescript-eslint/parser": "^4.20.0",
+		"eslint": "^7.23.0",
+		"eslint-config-prettier": "^8.1.0",
+		"eslint-plugin-prettier": "^3.3.1",
+		"prettier": "^2.2.1",
+		"ts-node": "^9.1.1",
+		"tslib": "^2.1.0",
+		"typescript": "^4.1.3"
+	}
+}

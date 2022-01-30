@@ -1,0 +1,22 @@
+{
+	"compilerOptions": {
+    	"module": "commonjs",
+    	"target": "es2021",
+    	"noImplicitAny": false,
+    	"sourceMap": true,
+    	"outDir": "build",
+    	"emitDecoratorMetadata": true,
+    	"experimentalDecorators": true,
+    	"importHelpers": true,
+    	"forceConsistentCasingInFileNames": true,
+      	"lib": [
+        	"es2021",
+        	"esnext.asynciterable"
+      	],
+      	"moduleResolution": "node",
+      	"resolveJsonModule": true,
+    },
+    "exclude": [
+      	"node_modules"
+    ]
+}
