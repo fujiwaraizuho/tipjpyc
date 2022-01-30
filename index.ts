@@ -1,5 +1,5 @@
 async function start() {
-    //
+	//
 }
 
 start();
