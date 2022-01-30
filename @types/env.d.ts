@@ -6,5 +6,7 @@ declare namespace NodeJS {
 		readonly DB_USERNAME: string;
 		readonly DB_PASSWORD: string;
 		readonly DB_DATABASE: string;
+		readonly DISCORD_WEBHOOK_URL: string;
+		readonly DISCORD_LOG_PREFIX: string;
 	}
 }
