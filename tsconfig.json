@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
     	"module": "commonjs",
-    	"target": "es2021",
+    	"target": "esnext",
     	"noImplicitAny": false,
     	"sourceMap": true,
     	"outDir": "build",
@@ -10,11 +10,11 @@
     	"importHelpers": true,
     	"forceConsistentCasingInFileNames": true,
       	"lib": [
-        	"es2021",
+        	"esnext",
         	"esnext.asynciterable"
       	],
       	"moduleResolution": "node",
-      	"resolveJsonModule": true,
+      	"resolveJsonModule": true
     },
     "exclude": [
       	"node_modules"
