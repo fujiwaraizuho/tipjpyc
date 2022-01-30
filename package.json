@@ -7,8 +7,8 @@
 	"license": "None",
 	"private": true,
 	"scripts": {
-		"start": "ts-node src/index.ts",
-		"dev": "nodemon src/index.ts",
+		"start": "ts-node app/index.ts",
+		"dev": "nodemon app/index.ts",
 		"ts-node": "ts-node",
 		"check-types": "tsc --noEmit",
 		"eslint": "eslint *.ts",
