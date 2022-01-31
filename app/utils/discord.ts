@@ -4,7 +4,7 @@ import { getConfig } from "./config";
 const client = new DiscordWebhook(getConfig("DISCORD_WEBHOOK_URL"));
 const prefix = getConfig("DISCORD_LOG_PREFIX");
 
-export const log = (message: string) => {
+export const text = (message: string): void => {
 	try {
 		client.execute({
 			content: `[${prefix}] ${message}`,
@@ -14,7 +14,7 @@ export const log = (message: string) => {
 	}
 };
 
-export const info = (title: string, message: string) => {
+export const info = (title: string, message: string): void => {
 	try {
 		client.execute({
 			embeds: [
@@ -30,7 +30,7 @@ export const info = (title: string, message: string) => {
 	}
 };
 
-export const warning = (title: string, message: string) => {
+export const warning = (title: string, message: string): void => {
 	try {
 		client.execute({
 			embeds: [
@@ -46,7 +46,7 @@ export const warning = (title: string, message: string) => {
 	}
 };
 
-export const danger = (title: string, message: string) => {
+export const danger = (title: string, message: string): void => {
 	try {
 		client.execute({
 			embeds: [
