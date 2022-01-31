@@ -20,6 +20,7 @@
 		"@types/cron": "^1.7.3",
 		"discord-webhook-ts": "^5.0.0",
 		"dotenv": "^8.2.0",
+		"log4js": "^6.4.1",
 		"mysql": "^2.14.1",
 		"nodemon": "^2.0.7",
 		"reflect-metadata": "^0.1.10",
