@@ -23,6 +23,7 @@
 		"mysql": "^2.14.1",
 		"nodemon": "^2.0.7",
 		"reflect-metadata": "^0.1.10",
+		"twitter-api-v2": "^1.10.0",
 		"typeorm": "0.2.41"
 	},
 	"devDependencies": {
