@@ -7,6 +7,7 @@
 	"license": "None",
 	"private": true,
 	"scripts": {
+		"prepare": "husky install",
 		"start": "ts-node app/index.ts",
 		"dev": "nodemon app/index.ts",
 		"ts-node": "ts-node",
@@ -33,12 +34,11 @@
 		"eslint": "^7.23.0",
 		"eslint-config-prettier": "^8.1.0",
 		"eslint-plugin-prettier": "^3.3.1",
+		"husky": "^7.0.4",
+		"lint-staged": "^12.3.2",
 		"prettier": "^2.2.1",
 		"ts-node": "3.3.0",
 		"tslib": "^2.1.0",
 		"typescript": "3.3.3333"
-	},
-	"eslintIgnore": [
-		"node_modules"
-	]
+	}
 }

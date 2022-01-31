@@ -5,6 +5,7 @@
     	"noImplicitAny": false,
     	"sourceMap": true,
     	"outDir": "build",
+		"strict": true,
     	"emitDecoratorMetadata": true,
     	"experimentalDecorators": true,
     	"importHelpers": true,
