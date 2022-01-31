@@ -1,7 +1,14 @@
+import { exit } from "process";
 import TwitterAPI, { ETwitterStreamEvent } from "twitter-api-v2";
 import { getConfig } from "./utils/config";
+import { danger } from "./utils/discord";
+import { getLogger } from "./utils/logger";
 
 const main = async () => {
+	const logger = getLogger();
+
+	logger.info("-- Welcome to tipJPYC BOT! --");
+
 	const apiKey = getConfig("TWITTER_API_KEY");
 	const client = new TwitterAPI(apiKey).readOnly;
 
@@ -10,6 +17,10 @@ const main = async () => {
 		expansions: ["author_id"],
 		"tweet.fields": ["author_id", "text", "source"],
 		"user.fields": ["username", "name", "created_at"],
+	});
+
+	stream.on(ETwitterStreamEvent.Connected, () => {
+		logger.info("Connected TwitterStream API...");
 	});
 
 	stream.on(ETwitterStreamEvent.Data, (eventData) => {
@@ -36,10 +47,23 @@ const main = async () => {
 		console.log(eventData.includes.users);
 	});
 
+	stream.on(ETwitterStreamEvent.Error, () => {
+		logger.error("TwitterStream API Connection Error!");
+
+		danger(
+			"Twitter Streaming API ERROR!",
+			"ツイートの取得に問題が発生しました１"
+		);
+
+		exit();
+	});
+
 	await stream.connect({
 		autoReconnect: true,
 		autoReconnectRetries: Infinity,
 	});
+
+	logger.info("BOT Ready!");
 };
 
 main();
