@@ -10,10 +10,9 @@
 		"start": "ts-node app/index.ts",
 		"dev": "nodemon app/index.ts",
 		"ts-node": "ts-node",
-		"check-types": "tsc --noEmit",
-		"eslint": "eslint *.ts",
-		"eslint:fix": "eslint *.ts --fix",
-		"lint": "tsc --noEmit && eslint *.ts",
+		"eslint": "eslint app/**/*.ts",
+		"eslint:fix": "eslint app/**/*.ts --fix",
+		"lint": "eslint app/**/*.ts",
 		"typeorm": "node --require ts-node/register ./node_modules/typeorm/cli.js"
 	},
 	"dependencies": {
@@ -38,5 +37,8 @@
 		"ts-node": "3.3.0",
 		"tslib": "^2.1.0",
 		"typescript": "3.3.3333"
-	}
+	},
+	"eslintIgnore": [
+		"node_modules"
+	]
 }
