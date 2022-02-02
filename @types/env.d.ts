@@ -8,5 +8,11 @@ declare namespace NodeJS {
 		readonly DB_DATABASE: string;
 		readonly DISCORD_WEBHOOK_URL: string;
 		readonly DISCORD_LOG_PREFIX: string;
+		readonly TWITTER_STREAM_API_KEY: string;
+		readonly TWITTER_APP_KEY: string;
+		readonly TWITTER_APP_SECRET: string;
+		readonly TWITTER_ACCESS_TOKEN: string;
+		readonly TWITTER_ACCESS_SECRET: string;
+		readonly ETHERS_MASTER_XPUB: string;
 	}
 }

@@ -2,11 +2,15 @@ import TwitterAPI, { ETwitterStreamEvent } from "twitter-api-v2";
 import { getConfig } from "./utils/config";
 import { danger } from "./utils/discord";
 import { getLogger } from "./utils/logger";
+import { createConnection } from "typeorm";
+import { exit } from "process";
 
 import tipCommand from "./twitter/commands/tipCommand";
 import depositCommand from "./twitter/commands/depositCommand";
 import balanceCommand from "./twitter/commands/balanceCommand";
 import withdrawCommand from "./twitter/commands/withdrawCommand";
+
+import "reflect-metadata";
 
 /* eslint-disable no-irregular-whitespace */
 /* 正規表現に全角空白を含む必要があるため */
@@ -23,10 +27,23 @@ const main = async () => {
 
 	logger.info("--- Welcome to tipJPYC BOT! ---");
 
-	const apiKey = getConfig("TWITTER_API_KEY");
-	const client = new TwitterAPI(apiKey).readOnly;
+	try {
+		logger.info("-> Try connection database...");
+		await createConnection();
+	} catch (err) {
+		logger.error("Database Connection Error!");
+		danger("Database Connection ERROR!", err);
+		exit();
+	}
 
-	const stream = await client.v2.searchStream({
+	const streamApiKey = getConfig("TWITTER_STREAM_API_KEY");
+	const streamClient = new TwitterAPI(streamApiKey).readOnly;
+
+	const rules = await streamClient.v2.streamRules();
+
+	logger.info(`-> Twitter Search [${rules.data[0].value}]`);
+
+	const stream = await streamClient.v2.searchStream({
 		autoConnect: false,
 		expansions: ["author_id"],
 		"tweet.fields": ["author_id", "text", "source"],
@@ -34,38 +51,65 @@ const main = async () => {
 	});
 
 	stream.on(ETwitterStreamEvent.Connected, () => {
-		logger.info("-> connected to twitter stream");
+		logger.info("-> Connected TwitterStream");
 	});
 
-	stream.on(ETwitterStreamEvent.Data, (eventData) => {
+	const client = new TwitterAPI({
+		appKey: getConfig("TWITTER_APP_KEY"),
+		appSecret: getConfig("TWITTER_APP_SECRET"),
+		accessToken: getConfig("TWITTER_ACCESS_TOKEN"),
+		accessSecret: getConfig("TWITTER_ACCESS_SECRET"),
+	});
+
+	stream.on(ETwitterStreamEvent.Data, async (eventData) => {
 		const { data } = eventData;
 		const { users } = eventData.includes;
 
-		logger.info(`-> catch tweet ${data.id}`);
+		const execUser = users.find((user) => user.id === data.author_id);
 
-		switch (true) {
-			case cmdRegExps.tip.test(data.text):
-				tipCommand();
-				break;
+		logger.info(`-> Tweet from ${execUser.username}: ${data.text}`);
 
-			case cmdRegExps.balance.test(data.text):
-				balanceCommand();
-				break;
-
-			case cmdRegExps.deposit.test(data.text):
-				depositCommand();
-				break;
-
-			case cmdRegExps.withdraw.test(data.text):
-				withdrawCommand();
-				break;
+		if (data.text.indexOf("@tipjpyc") === -1) {
+			logger.info("-> Ignore tweet");
+			return;
 		}
 
-		logger.info(`-> process finished ${data.id}`);
+		const message = data.text.replace(/@tipjpyc ?/, "");
+
+		logger.info(`-> Message: ${message}`);
+
+		try {
+			switch (true) {
+				case cmdRegExps.tip.test(message):
+					await tipCommand();
+					break;
+
+				case cmdRegExps.balance.test(message):
+					await balanceCommand();
+					break;
+
+				case cmdRegExps.deposit.test(message):
+					await depositCommand(execUser, data, client);
+					break;
+
+				case cmdRegExps.withdraw.test(message):
+					await withdrawCommand();
+					break;
+
+				default:
+					logger.info("-> no command");
+			}
+		} catch (err) {
+			// エラーが生じたので処理ができなかった旨の返信を返す
+			logger.error(err);
+			danger("Process Error!", err);
+		}
+
+		logger.info(`-> Done...`);
 	});
 
 	stream.on(ETwitterStreamEvent.ReconnectAttempt, () => {
-		logger.info("-> retry to connect to twitter stream");
+		logger.info("-> Retry connect TwitterStream");
 	});
 
 	stream.on(ETwitterStreamEvent.Error, (payload) => {
@@ -78,7 +122,7 @@ const main = async () => {
 		autoReconnectRetries: Infinity,
 	});
 
-	logger.info("-> tipJPYC setup is finished!");
+	logger.info("-> @tipjpyc setup is finished!");
 };
 
 main();
