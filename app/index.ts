@@ -1,13 +1,27 @@
-import { exit } from "process";
 import TwitterAPI, { ETwitterStreamEvent } from "twitter-api-v2";
 import { getConfig } from "./utils/config";
 import { danger } from "./utils/discord";
 import { getLogger } from "./utils/logger";
 
+import tipCommand from "./twitter/commands/tipCommand";
+import depositCommand from "./twitter/commands/depositCommand";
+import balanceCommand from "./twitter/commands/balanceCommand";
+import withdrawCommand from "./twitter/commands/withdrawCommand";
+
+/* eslint-disable no-irregular-whitespace */
+/* 正規表現に全角空白を含む必要があるため */
+const cmdRegExps = {
+	tip: /(tip)( |　)+(?<to>@([A-z0-9_]+))( |　)+(?<amount>([1-9]\d*|0))(\.\d+)?/,
+	deposit: /(deposit)/,
+	balance: /(balance)/,
+	withdraw:
+		/(withdraw)( |　)+((?<amount>([1-9]\d*|0))(\.\d+)?)( |　)+(?<address>0x[a-fA-F0-9]{40})?/,
+};
+
 const main = async () => {
 	const logger = getLogger();
 
-	logger.info("-- Welcome to tipJPYC BOT! --");
+	logger.info("--- Welcome to tipJPYC BOT! ---");
 
 	const apiKey = getConfig("TWITTER_API_KEY");
 	const client = new TwitterAPI(apiKey).readOnly;
@@ -20,42 +34,43 @@ const main = async () => {
 	});
 
 	stream.on(ETwitterStreamEvent.Connected, () => {
-		logger.info("Connected TwitterStream API...");
+		logger.info("-> connected to twitter stream");
 	});
 
 	stream.on(ETwitterStreamEvent.Data, (eventData) => {
-		/*
-			{
-  				author_id: '704103618413072384',
-  				id: '1488198899492098052',
-  				source: 'Twitter Web App',
-  				text: '@luco_inc say @azu_luco うっほほ？？？'
-			}
-		*/
-		console.log(eventData.data);
-		/*
-			[
-  				{
-    				id: '704103618413072384',
-    				name: 'ふじしゃん',
-    				username: 'fujiwaraizuho'
-  				},
-  				{ id: '1183070855850364929', name: 'luco', username: 'luco_inc' },
-  				{ id: '996156259819646976', name: 'あず㌠', username: 'azu_luco' }
-			]
-		*/
-		console.log(eventData.includes.users);
+		const { data } = eventData;
+		const { users } = eventData.includes;
+
+		logger.info(`-> catch tweet ${data.id}`);
+
+		switch (true) {
+			case cmdRegExps.tip.test(data.text):
+				tipCommand();
+				break;
+
+			case cmdRegExps.balance.test(data.text):
+				balanceCommand();
+				break;
+
+			case cmdRegExps.deposit.test(data.text):
+				depositCommand();
+				break;
+
+			case cmdRegExps.withdraw.test(data.text):
+				withdrawCommand();
+				break;
+		}
+
+		logger.info(`-> process finished ${data.id}`);
 	});
 
-	stream.on(ETwitterStreamEvent.Error, () => {
+	stream.on(ETwitterStreamEvent.ReconnectAttempt, () => {
+		logger.info("-> retry to connect to twitter stream");
+	});
+
+	stream.on(ETwitterStreamEvent.Error, (payload) => {
 		logger.error("TwitterStream API Connection Error!");
-
-		danger(
-			"Twitter Streaming API ERROR!",
-			"ツイートの取得に問題が発生しました１"
-		);
-
-		exit();
+		danger("Twitter Streaming API ERROR!", JSON.stringify(payload));
 	});
 
 	await stream.connect({
@@ -63,7 +78,7 @@ const main = async () => {
 		autoReconnectRetries: Infinity,
 	});
 
-	logger.info("BOT Ready!");
+	logger.info("-> tipJPYC setup is finished!");
 };
 
 main();
