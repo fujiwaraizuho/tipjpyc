@@ -8,7 +8,8 @@
 	"private": true,
 	"scripts": {
 		"prepare": "husky install",
-		"start": "ts-node app/index.ts",
+		"start:bot": "ts-node app/index.ts",
+		"start:listener": "ts-node app/listener/depositListener.ts",
 		"dev": "nodemon app/index.ts",
 		"ts-node": "ts-node",
 		"eslint": "eslint app/**/*.ts",

@@ -14,7 +14,7 @@ import "reflect-metadata";
 
 /* eslint-disable no-irregular-whitespace */
 /* 正規表現に全角空白を含む必要があるため */
-const cmdRegExps = {
+export const cmdRegExps = {
 	tip: /(tip)( |　)+(?<to>@([A-z0-9_]+))( |　)+(?<amount>([1-9]\d*|0))(\.\d+)?/,
 	deposit: /(deposit)/,
 	balance: /(balance)/,
