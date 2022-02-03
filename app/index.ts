@@ -85,7 +85,7 @@ const main = async () => {
 					break;
 
 				case cmdRegExps.balance.test(message):
-					await balanceCommand();
+					await balanceCommand(execUser, data, client);
 					break;
 
 				case cmdRegExps.deposit.test(message):
