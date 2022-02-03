@@ -5,7 +5,11 @@ import {
 	BaseEntity,
 	CreateDateColumn,
 	UpdateDateColumn,
+	OneToMany,
 } from "typeorm";
+
+import { Transaction } from "./Transaction";
+import { WithdrawRequest } from "./WithdrawRequest";
 
 export enum UserStatus {
 	ACTIVE = "ACTIVE", // 全サービス提供可能
@@ -40,6 +44,9 @@ export class User extends BaseEntity {
 		default: UserStatus.ACTIVE,
 	})
 	status: UserStatus;
+
+	@OneToMany(() => Transaction, (transaction) => transaction.user)
+	transactions: Transaction[];
 
 	@CreateDateColumn({
 		name: "created_at",
