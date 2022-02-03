@@ -49,7 +49,12 @@ const exec = async (
 			return;
 		}
 	} catch (err) {
-		logger.error(err);
+		await client.v2.reply(
+			`申し訳ありません! ${to} というユーザーは存在しないようです`,
+			tweet.id
+		);
+
+		logger.info("-> invalid user");
 		return;
 	}
 
