@@ -4,6 +4,7 @@ import { danger } from "./utils/discord";
 import { getLogger } from "./utils/logger";
 import { createConnection } from "typeorm";
 import { exit } from "process";
+import { Transaction } from "../database/entity/Transaction";
 
 import tipCommand from "./twitter/commands/tipCommand";
 import depositCommand from "./twitter/commands/depositCommand";
@@ -47,7 +48,7 @@ const main = async () => {
 		autoConnect: false,
 		expansions: ["author_id"],
 		"tweet.fields": ["author_id", "text", "source"],
-		"user.fields": ["username", "name", "created_at"],
+		"user.fields": ["username", "name", "created_at", "protected"],
 	});
 
 	stream.on(ETwitterStreamEvent.Connected, () => {
@@ -69,7 +70,11 @@ const main = async () => {
 
 		logger.info(`-> Tweet from ${execUser.username}: ${data.text}`);
 
-		if (data.text.indexOf("@tipjpyc") === -1) {
+		const checkTweet = await Transaction.findOne({
+			tweet_id: data.id,
+		});
+
+		if (data.text.indexOf("@tipjpyc") === -1 || checkTweet !== undefined) {
 			logger.info("-> Ignore tweet");
 			return;
 		}
@@ -81,7 +86,7 @@ const main = async () => {
 		try {
 			switch (true) {
 				case cmdRegExps.tip.test(message):
-					await tipCommand();
+					await tipCommand(message, execUser, data, client);
 					break;
 
 				case cmdRegExps.balance.test(message):
@@ -106,6 +111,7 @@ const main = async () => {
 		}
 
 		logger.info(`-> Done...`);
+		logger.info("-----");
 	});
 
 	stream.on(ETwitterStreamEvent.ReconnectAttempt, () => {
@@ -123,6 +129,7 @@ const main = async () => {
 	});
 
 	logger.info("-> @tipjpyc setup is finished!");
+	logger.info("-----");
 };
 
 main();

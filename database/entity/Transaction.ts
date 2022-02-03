@@ -42,7 +42,6 @@ export class Transaction extends BaseEntity {
 	@Column({
 		type: "varchar",
 		nullable: true,
-		unique: true,
 	})
 	tweet_id: string;
 
