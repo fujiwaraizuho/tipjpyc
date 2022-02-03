@@ -1,5 +1,4 @@
 import { TweetV2, TwitterApi, UserV2 } from "twitter-api-v2";
-import { SettingFlag } from "../../../database/entity/SettingFlag";
 import { getLogger } from "../../utils/logger";
 import { canDepositCommand } from "../../utils/permission";
 import { getUser } from "../../utils/user";
