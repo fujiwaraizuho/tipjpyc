@@ -98,7 +98,7 @@ const main = async () => {
 					break;
 
 				case cmdRegExps.withdraw.test(message):
-					await withdrawCommand();
+					await withdrawCommand(message, execUser, data, client);
 					break;
 
 				default:

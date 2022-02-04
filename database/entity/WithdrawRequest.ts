@@ -47,6 +47,11 @@ export class WithdrawRequest extends BaseEntity {
 	amount: number;
 
 	@Column({
+		type: "int",
+	})
+	tax: number;
+
+	@Column({
 		type: "enum",
 		enum: NetworkType,
 	})
