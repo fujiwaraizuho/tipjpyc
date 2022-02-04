@@ -2,6 +2,7 @@ import { TweetV2, TwitterApi, UserV2, UserV2Result } from "twitter-api-v2";
 import { getConnection } from "typeorm";
 import { cmdRegExps } from "../..";
 import { CommandType, Transaction } from "../../../database/entity/Transaction";
+import { danger, info } from "../../utils/discord";
 import { getLogger } from "../../utils/logger";
 import { canTipCommand } from "../../utils/permission";
 import { getUser } from "../../utils/user";
@@ -122,6 +123,7 @@ const exec = async (
 		await queryRunner.rollbackTransaction();
 
 		logger.error(err);
+		danger("Process Error!", JSON.stringify(err));
 
 		await client.v2.reply(
 			`ごめんなさい、投げ銭に失敗しました…\nしばらく待ってからやり直してみてください!`,
@@ -134,6 +136,11 @@ const exec = async (
 	}
 
 	logger.info("-> Sent");
+
+	info(
+		"SENT TIP",
+		`${amount}JPYC from @${execUser.username} to @${toTwitterUser.data.username}`
+	);
 
 	await client.v2.reply(
 		`@${execUser.username} さんから @${toTwitterUser.data.username} さんに ${amount} JPYCの投げ銭です! `,

@@ -33,7 +33,7 @@ const main = async () => {
 		await createConnection();
 	} catch (err) {
 		logger.error("Database Connection Error!");
-		danger("Database Connection ERROR!", err);
+		danger("Database Connection ERROR!", JSON.stringify(err));
 		exit();
 	}
 
@@ -107,11 +107,10 @@ const main = async () => {
 		} catch (err) {
 			// エラーが生じたので処理ができなかった旨の返信を返す
 			logger.error(err);
-			danger("Process Error!", err);
+			danger("Process Error!", JSON.stringify(err));
 		}
 
 		logger.info(`-> Done...`);
-		logger.info("-----");
 	});
 
 	stream.on(ETwitterStreamEvent.ReconnectAttempt, () => {
