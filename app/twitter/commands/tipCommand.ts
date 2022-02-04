@@ -58,9 +58,9 @@ const exec = async (
 		return;
 	}
 
-	if (Number.isInteger(Number(amount))) {
+	if (!Number.isSafeInteger(Number(amount))) {
 		await client.v2.reply(
-			`申し訳ありません!\n投げ銭の額は正の整数でお願いします。`,
+			`申し訳ありません!\n投げ銭の額が正の整数でないか不正です。`,
 			tweet.id
 		);
 
@@ -92,7 +92,7 @@ const exec = async (
 
 		if (balance < Number.parseInt(amount)) {
 			await client.v2.reply(
-				`ごめんなさい、残高が足りないみたいです。\n残高 ${balance} JPYC`,
+				`ごめんなさい、残高が足りないみたいです。\nあなたの残高 ${balance} JPYC`,
 				tweet.id
 			);
 
@@ -140,8 +140,9 @@ const exec = async (
 	logger.info("-> Sent");
 
 	info(
-		"SENT TIP",
-		`${amount}JPYC from @${execUser.username} to @${toTwitterUser.data.username}`
+		"投げ銭が完了しました",
+		`Amount: ${amount}JPYC\nFrom: ${execUser.name}(@${execUser.username})\nTo: ${toTwitterUser.data.name}(@${toTwitterUser.data.username})\nMessage: ${message}`,
+		`https://twitter.com/_/status/${tweet.id}`
 	);
 
 	await client.v2.reply(

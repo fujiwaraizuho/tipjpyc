@@ -14,7 +14,7 @@ export const text = (message: string): void => {
 	}
 };
 
-export const info = (title: string, message: string): void => {
+export const info = (title: string, message: string, url?: string): void => {
 	try {
 		client.execute({
 			embeds: [
@@ -22,6 +22,7 @@ export const info = (title: string, message: string): void => {
 					title: title,
 					description: message,
 					color: 0x20c033,
+					url: url,
 				},
 			],
 		});
