@@ -34,7 +34,6 @@ const exec = async (
 
 	let toTwitterUser: UserV2Result;
 
-	// 投げ銭する相手のアカウントが存在して鍵アカウントじゃないか
 	try {
 		toTwitterUser = await client.v2.userByUsername(to.replace(/@?/, ""), {
 			"user.fields": ["username", "name", "created_at", "protected"],
@@ -59,8 +58,12 @@ const exec = async (
 		return;
 	}
 
-	// 投げ銭の額をバリデーション
-	if (Number.isNaN(Number(amount))) {
+	if (Number.isInteger(Number(amount))) {
+		await client.v2.reply(
+			`申し訳ありません!\n投げ銭の額は正の整数でお願いします。`,
+			tweet.id
+		);
+
 		logger.info("-> invalid amount");
 		return;
 	}
@@ -87,10 +90,9 @@ const exec = async (
 			.setLock("pessimistic_write")
 			.getRawOne<{ balance: number }>();
 
-		// 残高チェック (<= にするべきか…？)
 		if (balance < Number.parseInt(amount)) {
 			await client.v2.reply(
-				"ごめんなさい、残高が足りないみたいです。",
+				`ごめんなさい、残高が足りないみたいです。\n残高 ${balance} JPYC`,
 				tweet.id
 			);
 
