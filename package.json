@@ -10,6 +10,7 @@
 		"prepare": "husky install",
 		"start:bot": "ts-node app/index.ts",
 		"start:listener": "ts-node app/listener/depositListener.ts",
+		"admin:withdraw": "ts-node admin/scripts/withdrawSigner.ts",
 		"dev": "nodemon app/index.ts",
 		"ts-node": "ts-node",
 		"eslint": "eslint app/**/*.ts",
@@ -38,6 +39,7 @@
 		"husky": "^7.0.4",
 		"lint-staged": "^12.3.2",
 		"prettier": "^2.2.1",
+		"readline": "^1.3.0",
 		"ts-node": "3.3.0",
 		"tslib": "^2.1.0",
 		"typescript": "3.3.3333"
