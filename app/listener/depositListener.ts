@@ -13,7 +13,7 @@ const main = async () => {
 		await createConnection();
 	} catch (err) {
 		logger.error("Database Connection Error!");
-		danger("Database Connection ERROR!", err);
+		await danger("Database Connection ERROR!", String(err));
 		exit();
 	}
 

@@ -110,7 +110,7 @@ const exec = async (
 		await queryRunner.rollbackTransaction();
 
 		logger.error(err);
-		danger("Process Error!", JSON.stringify(err));
+		await danger("Process Error!", String(err));
 
 		await client.v2.reply(
 			"ごめんなさい、出金リクエストに失敗しました…\nしばらく待ってからやり直してみてください!",
@@ -124,7 +124,7 @@ const exec = async (
 
 	logger.info("-> Withdraw requested");
 
-	info(
+	await info(
 		"出金リクエストを受け付けました",
 		`From: ${execUser.name}(@${execUser.username})\nAmount: ${amount}JPYC\nTax: ${tax}JPYC\nAddress: ${address}`,
 		`https://twitter.com/_/status/${tweet.id}`
