@@ -57,13 +57,17 @@ const main = async () => {
 				await queryRunner.startTransaction();
 
 				try {
+					// Todo: 小数点以下送られてきたらどうするか→反映しない？
+					const amount = Math.floor(
+						Number.parseInt(ethers.utils.formatEther(value))
+					);
+
 					// transactionへの書き込み
 					const transaction = new Transaction();
 
 					transaction.user_id = user.id;
 					// Todo: depositの際,tweet_idは必要か
-					// Todo: 小数点以下送られてきたらどうするか→反映しない？
-					transaction.amount = Number.parseInt(value);
+					transaction.amount = amount;
 					transaction.command_type = CommandType.DEPOSIT;
 
 					await queryRunner.manager.save(Transaction, transaction);
@@ -73,8 +77,7 @@ const main = async () => {
 
 					depositHistory.transaction_id = transaction.id;
 					depositHistory.txid = event.transactionHash;
-					// Todo: 小数点以下送られてきたらどうするか→反映しない？
-					depositHistory.amount = Number.parseInt(value);
+					depositHistory.amount = amount;
 					depositHistory.network_type = NetworkType.POLYGON;
 
 					await queryRunner.manager.save(
