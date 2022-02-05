@@ -4,9 +4,9 @@ import { getConfig } from "./config";
 const client = new DiscordWebhook(getConfig("DISCORD_WEBHOOK_URL"));
 const prefix = getConfig("DISCORD_LOG_PREFIX");
 
-export const text = (message: string): void => {
+export const text = async (message: string) => {
 	try {
-		client.execute({
+		await client.execute({
 			content: `[${prefix}] ${message}`,
 		});
 	} catch (err) {
@@ -14,9 +14,9 @@ export const text = (message: string): void => {
 	}
 };
 
-export const info = (title: string, message: string, url?: string): void => {
+export const info = async (title: string, message: string, url?: string) => {
 	try {
-		client.execute({
+		await client.execute({
 			embeds: [
 				{
 					title: title,
@@ -31,9 +31,9 @@ export const info = (title: string, message: string, url?: string): void => {
 	}
 };
 
-export const warning = (title: string, message: string): void => {
+export const warning = async (title: string, message: string) => {
 	try {
-		client.execute({
+		await client.execute({
 			embeds: [
 				{
 					title: title,
@@ -47,9 +47,9 @@ export const warning = (title: string, message: string): void => {
 	}
 };
 
-export const danger = (title: string, message: string): void => {
+export const danger = async (title: string, message: string) => {
 	try {
-		client.execute({
+		await client.execute({
 			embeds: [
 				{
 					title: title,
@@ -59,6 +59,6 @@ export const danger = (title: string, message: string): void => {
 			],
 		});
 	} catch (err) {
-		//
+		console.log(err);
 	}
 };
