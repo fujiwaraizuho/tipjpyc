@@ -9,7 +9,7 @@ import {
 	NetworkType,
 } from "../../database/entity/DepositHistory";
 import { CommandType, Transaction } from "../../database/entity/Transaction";
-import jpycv1abi from "./jpycv1abi.json";
+import { jpycv1Abi } from "./jpycv1abi";
 import { getConfig } from "../utils/config";
 
 const main = async () => {
@@ -27,12 +27,12 @@ const main = async () => {
 	}
 
 	//
-	const rpc = getConfig("EPC_WSS");
+	const rpc = getConfig("RPC_WSS");
 	const contractAddess = getConfig("JPYC_CONTRACT_ADDRESS");
 	const webSocketProvider = new ethers.providers.WebSocketProvider(rpc);
 	const contract = new ethers.Contract(
 		contractAddess,
-		jpycv1abi.abi,
+		jpycv1Abi as any,
 		webSocketProvider
 	);
 
