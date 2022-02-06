@@ -41,8 +41,6 @@ const main = async () => {
 	);
 
 	contract.on("Transfer", async (from, to, value, event) => {
-		// 多数のEventが発火された時どうなるか
-
 		// Todo: logいらない？
 		logger.info(
 			`-> Transfer ${value}JPYC from ${from} to ${value}, txhash is ${event.transactionHash}`
@@ -69,7 +67,6 @@ const main = async () => {
 			return;
 		}
 
-		// Todo: 小数点以下は反映しない
 		const amount = Math.floor(
 			Number.parseInt(ethers.utils.formatEther(value))
 		);
@@ -88,7 +85,6 @@ const main = async () => {
 			const transaction = new Transaction();
 
 			transaction.user_id = user.id;
-			// Todo: depositの際,tweet_idは必要か
 			transaction.amount = amount;
 			transaction.command_type = CommandType.DEPOSIT;
 
