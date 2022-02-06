@@ -9,7 +9,7 @@ import {
 	NetworkType,
 } from "../../database/entity/DepositHistory";
 import { CommandType, Transaction } from "../../database/entity/Transaction";
-import { jpycv1Abi } from "./jpycv1abi";
+import jpycv1Abi from "../../abis/JPYCV1Abi";
 import { getConfig } from "../utils/config";
 
 const main = async () => {
@@ -32,7 +32,7 @@ const main = async () => {
 	const webSocketProvider = new ethers.providers.WebSocketProvider(rpc);
 	const contract = new ethers.Contract(
 		contractAddess,
-		jpycv1Abi as any,
+		jpycv1Abi,
 		webSocketProvider
 	);
 
@@ -41,7 +41,6 @@ const main = async () => {
 	);
 
 	contract.on("Transfer", async (from, to, value, event) => {
-		// Todo: logいらない？
 		logger.info(
 			`-> Transfer ${value}JPYC from ${from} to ${value}, txhash is ${event.transactionHash}`
 		);
@@ -110,12 +109,11 @@ const main = async () => {
 			await queryRunner.release();
 		}
 
-		logger.info("-> Sent");
+		logger.info("-> Deposited");
 
-		// 他のログみたいにTodo: user名とか取ってきた方がいい？
-		info(
+		await info(
 			"入金が完了しました",
-			`Amount: ${amount}JPYC\nTo: ${user.twitter_id})`
+			`Amount: ${amount}JPYC\nTo: ${user.twitter_id}`
 		);
 	});
 
