@@ -42,6 +42,18 @@ const main = async () => {
 
 	const rules = await streamClient.v2.streamRules();
 
+	// const Rules = new TwitterAPI(streamApiKey);
+	// await Rules.v2.updateStreamRules({
+	// 	add: [
+	// 		{ value: '(@i0x_xx OR to:i0x_xx) -from:i0x_xx' },
+	// 	],
+	// });
+	// await Rules.v2.updateStreamRules({
+	// 	delete: {
+	// 		ids: ['1490085089279025153'],
+	// 	},
+	// });
+
 	logger.info(`-> Twitter Search [${rules.data[0].value}]`);
 
 	const stream = await streamClient.v2.searchStream({
@@ -74,12 +86,12 @@ const main = async () => {
 			tweet_id: data.id,
 		});
 
-		if (data.text.indexOf("@tipjpyc") === -1 || checkTweet !== undefined) {
+		if (data.text.indexOf("@i0x_xx") === -1 || checkTweet !== undefined) {
 			logger.info("-> Ignore tweet");
 			return;
 		}
 
-		const message = data.text.replace(/@tipjpyc ?/, "");
+		const message = data.text.replace(/@i0x_xx ?/, "");
 
 		logger.info(`-> Message: ${message}`);
 

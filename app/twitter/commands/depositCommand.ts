@@ -1,4 +1,5 @@
 import { TweetV2, TwitterApi, UserV2 } from "twitter-api-v2";
+import { SettingFlag } from "../../../database/entity/SettingFlag";
 import { getLogger } from "../../utils/logger";
 import { canDepositCommand } from "../../utils/permission";
 import { getUser } from "../../utils/user";
@@ -15,9 +16,6 @@ const exec = async (execUser: UserV2, tweet: TweetV2, client: TwitterApi) => {
 			"このコマンドは管理者によって制限されています。\nご不明な点があれば DM までご連絡ください。",
 			tweet.id
 		);
-
-		logger.info("-> permission error");
-
 		return;
 	}
 
