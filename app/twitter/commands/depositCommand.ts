@@ -16,6 +16,9 @@ const exec = async (execUser: UserV2, tweet: TweetV2, client: TwitterApi) => {
 			"このコマンドは管理者によって制限されています。\nご不明な点があれば DM までご連絡ください。",
 			tweet.id
 		);
+
+		logger.info("-> permission error");
+
 		return;
 	}
 
