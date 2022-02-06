@@ -120,6 +120,4 @@ const main = async () => {
 	logger.info("-> tipjpyc deposit listener setup is finished!");
 };
 
-const transferListener = async () => {};
-
 main();
