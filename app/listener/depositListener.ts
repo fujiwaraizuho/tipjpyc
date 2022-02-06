@@ -104,7 +104,7 @@ const main = async () => {
 			await queryRunner.rollbackTransaction();
 
 			logger.error(err);
-			danger("Process Error!", JSON.stringify(err));
+			await danger("Process Error!", JSON.stringify(err));
 		} finally {
 			await queryRunner.release();
 		}
