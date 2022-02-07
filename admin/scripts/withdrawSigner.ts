@@ -54,7 +54,7 @@ const main = async () => {
 	for (;;) {
 		const withdrawRequest = await WithdrawRequest.findOne(
 			{
-				status: WithdrawStatus.UNCOMPLETED,
+				status: WithdrawStatus.UNBUSY,
 			},
 			{
 				order: {
@@ -69,7 +69,7 @@ const main = async () => {
 			exit();
 		}
 
-		withdrawRequest.status = WithdrawStatus.LOCKING;
+		withdrawRequest.status = WithdrawStatus.BUSY;
 		await withdrawRequest.save();
 
 		console.info(`[Withdraw Request #${withdrawRequest.id}]`);
@@ -103,7 +103,7 @@ const confirm = async (message: string, withdrawRequest: WithdrawRequest) => {
 		console.info("------------------");
 		console.info("> 終了処理を行います");
 
-		withdrawRequest.status = WithdrawStatus.UNCOMPLETED;
+		withdrawRequest.status = WithdrawStatus.UNBUSY;
 		await withdrawRequest.save();
 
 		console.info("> 終了処理が完了しました");
