@@ -7,7 +7,6 @@ import {
 	NetworkType,
 	WithdrawRequest,
 } from "../../../database/entity/WithdrawRequest";
-import { getConfig } from "../../utils/config";
 import { danger, info } from "../../utils/discord";
 import { getLogger } from "../../utils/logger";
 import { canWithdrawRequestCommand } from "../../utils/permission";
@@ -34,7 +33,7 @@ const exec = async (
 	}
 
 	const { amount, address } = message.match(cmdRegExps.withdraw).groups;
-	const tax = getConfig("WITHDRAW_TAX");
+	const tax = 0;
 
 	if (!Number.isSafeInteger(Number(amount))) {
 		await client.v2.reply(
@@ -76,9 +75,9 @@ const exec = async (
 			.setLock("pessimistic_write")
 			.getRawOne<{ balance: number }>();
 
-		if (balance < Number.parseInt(amount) + Number.parseInt(tax)) {
+		if (balance < Number.parseInt(amount)) {
 			await client.v2.reply(
-				`ごめんなさい、残高が足りないみたいです。\n出金には${tax}JPYCの手数料がかかることにも注意してください! (残高: ${balance}JPYC)`,
+				`ごめんなさい、残高が足りないみたいです。(現在の残高: ${balance}JPYC)`,
 				tweet.id
 			);
 
@@ -90,7 +89,7 @@ const exec = async (
 
 		transaction.user_id = user.id;
 		transaction.tweet_id = tweet.id;
-		transaction.amount = -(Number.parseInt(amount) + Number.parseInt(tax));
+		transaction.amount = -Number.parseInt(amount);
 		transaction.command_type = CommandType.WITHDRAW;
 
 		await queryRunner.manager.save(Transaction, transaction);
@@ -100,7 +99,7 @@ const exec = async (
 		withdrawRequest.transaction_id = transaction.id;
 		withdrawRequest.address = address;
 		withdrawRequest.amount = Number.parseInt(amount);
-		withdrawRequest.tax = Number.parseInt(tax);
+		withdrawRequest.tax = tax;
 		withdrawRequest.network_type = NetworkType.POLYGON;
 
 		await queryRunner.manager.save(WithdrawRequest, withdrawRequest);
