@@ -26,7 +26,6 @@ const main = async () => {
 		exit();
 	}
 
-	//
 	const rpc = getConfig("RPC_WSS");
 	const contractAddess = getConfig("JPYC_CONTRACT_ADDRESS");
 	const webSocketProvider = new ethers.providers.WebSocketProvider(rpc);
@@ -45,8 +44,7 @@ const main = async () => {
 			`-> Transfer ${value}JPYC from ${from} to ${value}, txhash is ${event.transactionHash}`
 		);
 
-		// Todo: utils/user.ts でgetUserByAddress()を作るか聞く
-		let user = await User.findOne({
+		const user = await User.findOne({
 			address: to,
 		});
 
@@ -56,12 +54,12 @@ const main = async () => {
 			return;
 		}
 
-		let depositHistory = await DepositHistory.findOne({
+		const depositHistory = await DepositHistory.findOne({
 			txid: event.transactionHash,
 		});
 
 		// 同じtxhashがあったら終了
-		if (depositHistory != undefined) {
+		if (depositHistory !== undefined) {
 			logger.info("-> Ignore same transaction hash");
 			return;
 		}
@@ -80,7 +78,6 @@ const main = async () => {
 		await queryRunner.startTransaction();
 
 		try {
-			// transactionへの書き込み
 			const transaction = new Transaction();
 
 			transaction.user_id = user.id;
@@ -89,7 +86,6 @@ const main = async () => {
 
 			await queryRunner.manager.save(Transaction, transaction);
 
-			// deposit_historyへの書き込み
 			const depositHistory = new DepositHistory();
 
 			depositHistory.transaction_id = transaction.id;
@@ -104,7 +100,7 @@ const main = async () => {
 			await queryRunner.rollbackTransaction();
 
 			logger.error(err);
-			await danger("Process Error!", JSON.stringify(err));
+			await danger("Process Error!", String(err));
 		} finally {
 			await queryRunner.release();
 		}

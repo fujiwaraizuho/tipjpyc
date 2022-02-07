@@ -3,6 +3,7 @@ import {
 	Column,
 	CreateDateColumn,
 	Entity,
+	Index,
 	JoinColumn,
 	ManyToOne,
 	OneToOne,
@@ -31,12 +32,14 @@ export class Transaction extends BaseEntity {
 	@Column({
 		type: "bigint",
 	})
+	@Index()
 	user_id: number;
 
 	@Column({
 		type: "bigint",
 		nullable: true,
 	})
+	@Index()
 	tx_user_id: number | null;
 
 	@Column({

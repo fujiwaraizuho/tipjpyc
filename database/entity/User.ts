@@ -9,7 +9,6 @@ import {
 } from "typeorm";
 
 import { Transaction } from "./Transaction";
-import { WithdrawRequest } from "./WithdrawRequest";
 
 export enum UserStatus {
 	ACTIVE = "ACTIVE", // 全サービス提供可能
