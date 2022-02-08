@@ -117,6 +117,8 @@ const main = async () => {
 
 				logger.error(err);
 				await danger("Process Error!", String(err));
+
+				return;
 			} finally {
 				await queryRunner.release();
 			}
