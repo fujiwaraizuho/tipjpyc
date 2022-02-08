@@ -99,7 +99,7 @@ const confirm = async (message: string, withdrawRequest: WithdrawRequest) => {
 		.trim()
 		.toLowerCase();
 
-	if (!(answer === "y" || answer === "n")) {
+	if (answer !== "y" && answer !== "n") {
 		console.info("------------------");
 		console.info("> 終了処理を行います");
 
