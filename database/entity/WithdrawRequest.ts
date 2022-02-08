@@ -11,15 +11,16 @@ import {
 import { Transaction } from "./Transaction";
 
 export enum NetworkType {
-	MAINNET = "MAINNNET",
+	RINKEBY = "RINKEBY",
 	POLYGON = "POLYGON",
+	MUMBAI = "MUMBAI",
 }
 
 export enum WithdrawStatus {
-	UNCOMPLETED = "UNCOMPLETED",
-	LOCKING = "LOCKING",
-	ACCEPT = "ACCEPT",
-	REJECT = "REJECT",
+	UNBUSY = "UNBUSY",
+	BUSY = "BUSY",
+	APPROVAL = "APPROVAL",
+	DISAPPROVAL = "DISAPPROVAL",
 	FAILED = "FAILED",
 }
 
@@ -34,6 +35,12 @@ export class WithdrawRequest extends BaseEntity {
 		type: "bigint",
 	})
 	transaction_id: number;
+
+	@Column({
+		type: "varchar",
+		unique: true,
+	})
+	txid: string;
 
 	@Column({
 		type: "varchar",
@@ -60,7 +67,7 @@ export class WithdrawRequest extends BaseEntity {
 	@Column({
 		type: "enum",
 		enum: WithdrawStatus,
-		default: WithdrawStatus.UNCOMPLETED,
+		default: WithdrawStatus.UNBUSY,
 	})
 	status: WithdrawStatus;
 

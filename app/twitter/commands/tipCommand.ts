@@ -106,7 +106,7 @@ const exec = async (
 		fromTx.tx_user_id = toUser.id;
 		fromTx.tweet_id = tweet.id;
 		fromTx.amount = -Number.parseInt(amount);
-		fromTx.command_type = CommandType.TIP;
+		fromTx.command_type = CommandType.TIP_OUT;
 
 		await queryRunner.manager.save(Transaction, fromTx);
 
@@ -116,7 +116,7 @@ const exec = async (
 		toTx.tx_user_id = fromUser.id;
 		toTx.tweet_id = tweet.id;
 		toTx.amount = Number.parseInt(amount);
-		toTx.command_type = CommandType.TIP;
+		toTx.command_type = CommandType.TIP_IN;
 
 		await queryRunner.manager.save(Transaction, toTx);
 

@@ -10,8 +10,9 @@ import {
 import { Transaction } from "./Transaction";
 
 export enum NetworkType {
-	MAINNET = "MAINNNET",
+	RINKEBY = "RINKEBY",
 	POLYGON = "POLYGON",
+	MUMBAI = "MUMBAI",
 }
 
 @Entity()

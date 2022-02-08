@@ -26,9 +26,13 @@ const main = async () => {
 	let signer: LedgerSigner;
 
 	try {
-		const provider = new ethers.providers.AlchemyProvider("", "");
-		signer = new LedgerSigner(provider, "default", "m/44'/60'/1'/0");
+		const provider = new ethers.providers.AlchemyProvider(
+			getConfig("NETWORK_TYPE"),
+			getConfig("ALCHEMY_API_KEY")
+		);
+		signer = new LedgerSigner(provider, "hid", "m/44'/60'/0'/1");
 	} catch (err) {
+		console.log(err);
 		console.error("Provider or Signer Error!");
 		await danger("Provider or Signer Connection ERROR!", String(err));
 		exit();
@@ -40,17 +44,17 @@ const main = async () => {
 		signer
 	);
 
-	const address = signer.getAddress();
+	const address = await signer.getAddress();
 	const balance = await jpycV1Contract.balanceOf(address);
 
-	console.log(`-> Address: ${address}`);
-	console.log(`-> Balance: ${balance}`);
+	console.log(`-> Admin Address: ${address}`);
+	console.log(`-> All Balance: ${balance} JPYC`);
 	console.info("------------------");
 
 	for (;;) {
 		const withdrawRequest = await WithdrawRequest.findOne(
 			{
-				status: WithdrawStatus.UNCOMPLETED,
+				status: WithdrawStatus.UNBUSY,
 			},
 			{
 				order: {
@@ -61,15 +65,15 @@ const main = async () => {
 		);
 
 		if (withdrawRequest === undefined) {
-			console.info("処理できる出金リクエストがありません!");
+			console.info("> 処理できる出金リクエストがありません");
 			exit();
 		}
 
-		withdrawRequest.status = WithdrawStatus.LOCKING;
+		withdrawRequest.status = WithdrawStatus.BUSY;
 		await withdrawRequest.save();
 
-		console.log(`[Withdraw Request #${withdrawRequest.id}]`);
-		console.log(`CurrentStatus: ${withdrawRequest.status}`);
+		console.info(`[Withdraw Request #${withdrawRequest.id}]`);
+		console.info(`CurrentStatus: ${withdrawRequest.status}`);
 		console.info(`UserID: ${withdrawRequest.transaction.user_id}`);
 		console.info(`Address: ${withdrawRequest.address}`);
 		console.info(`Amount: ${withdrawRequest.amount} JPYC`);
@@ -91,22 +95,22 @@ const main = async () => {
 };
 
 const confirm = async (message: string, withdrawRequest: WithdrawRequest) => {
-	const answer = await question(`> ${message} (y/n/e): `);
+	const answer = await (await question(`> ${message} (y/n/e): `))
+		.trim()
+		.toLowerCase();
 
-	if (answer.trim().toLowerCase() === "y") {
-		return true;
-	} else if (answer.trim().toLowerCase() === "n") {
-		return false;
-	} else {
+	if (!(answer === "y" || answer === "n")) {
 		console.info("------------------");
 		console.info("> 終了処理を行います");
 
-		withdrawRequest.status = WithdrawStatus.UNCOMPLETED;
+		withdrawRequest.status = WithdrawStatus.UNBUSY;
 		await withdrawRequest.save();
 
 		console.info("> 終了処理が完了しました");
 		exit();
 	}
+
+	return answer === "y";
 };
 
 const question = (question: string): Promise<string> => {
