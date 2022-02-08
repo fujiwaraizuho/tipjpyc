@@ -1,19 +1,12 @@
 import { ethers } from "ethers";
 
 const main = async () => {
-	const password = "";
-
-	console.log(`Password: \n${password}\n`);
-
 	const entropy = ethers.utils.randomBytes(32);
 	const mnemonicPhrase = ethers.utils.entropyToMnemonic(entropy);
 
 	console.log(`MnemonicPhrase: \n${mnemonicPhrase}\n`);
 
-	const privateNode = ethers.utils.HDNode.fromMnemonic(
-		mnemonicPhrase,
-		password
-	);
+	const privateNode = ethers.utils.HDNode.fromMnemonic(mnemonicPhrase);
 	const publicNode = privateNode.derivePath("m/44'/60'/0'").neuter();
 
 	const xpub = publicNode.extendedKey;

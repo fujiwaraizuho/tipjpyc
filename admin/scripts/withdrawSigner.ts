@@ -30,7 +30,7 @@ const main = async () => {
 			getConfig("NETWORK_TYPE"),
 			getConfig("ALCHEMY_API_KEY")
 		);
-		signer = new LedgerSigner(provider, "hid", "m/44'/60'/0'/1");
+		signer = new LedgerSigner(provider, "hid", "m/44'/60'/1'/0");
 	} catch (err) {
 		console.log(err);
 		console.error("Provider or Signer Error!");
