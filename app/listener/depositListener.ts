@@ -23,7 +23,7 @@ const main = async () => {
 	const rpc = getConfig("RPC_WSS");
 	const contractAddess = getConfig("JPYC_CONTRACT_ADDRESS");
 	const network = getConfig("NETWORK_TYPE");
-	const alchemyKey = getConfig("ALCHEMY_KEY");
+	const alchemyKey = getConfig("ALCHEMY_API_KEY");
 
 	try {
 		logger.info("-> Try connection database...");
