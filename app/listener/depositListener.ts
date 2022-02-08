@@ -20,14 +20,15 @@ const main = async () => {
 	let contract: ethers.Contract;
 	let provider: ethers.providers.AlchemyProvider;
 
+	const rpc = getConfig("RPC_WSS");
+	const contractAddess = getConfig("JPYC_CONTRACT_ADDRESS");
+	const network = getConfig("NETWORK_TYPE");
+	const alchemyKey = getConfig("ALCHEMY_KEY");
+
 	try {
 		logger.info("-> Try connection database...");
 		await createConnection();
 
-		const rpc = getConfig("RPC_WSS");
-		const contractAddess = getConfig("JPYC_CONTRACT_ADDRESS");
-		const network = getConfig("NETWORK");
-		const alchemyKey = getConfig("ALCHEMY_KEY");
 		const webSocketProvider = new ethers.providers.WebSocketProvider(rpc);
 		provider = new ethers.providers.AlchemyProvider(network, alchemyKey);
 		contract = new ethers.Contract(
@@ -51,6 +52,9 @@ const main = async () => {
 				`-> Transfer ${value}JPYC from ${from} to ${value}, txhash is ${event.transactionHash}`
 			);
 
+			// 1confirmationまつ
+			await provider.waitForTransaction(event.transactionHash, 1);
+
 			const user = await User.findOne({
 				address: to,
 			});
@@ -61,18 +65,15 @@ const main = async () => {
 				return;
 			}
 
-			let depositHistory = await DepositHistory.findOne({
+			const checkDepositHistory = await DepositHistory.findOne({
 				txid: event.transactionHash,
 			});
 
 			// 同じtxhashがあったら終了
-			if (depositHistory != undefined) {
+			if (checkDepositHistory != undefined) {
 				logger.info("-> Ignore same transaction hash");
 				return;
 			}
-
-			// 1confirmationまつ
-			await provider.waitForTransaction(event.transactionHash, 1);
 
 			const amount = Math.floor(
 				Number.parseInt(ethers.utils.formatEther(value))
