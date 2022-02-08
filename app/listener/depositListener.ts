@@ -24,7 +24,6 @@ const main = async () => {
 		logger.info("-> Try connection database...");
 		await createConnection();
 
-		// web3周りの設定
 		const rpc = getConfig("RPC_WSS");
 		const contractAddess = getConfig("JPYC_CONTRACT_ADDRESS");
 		const network = getConfig("NETWORK");
