@@ -79,6 +79,11 @@ const main = async () => {
 				Number.parseInt(ethers.utils.formatEther(value))
 			);
 
+			if (amount === 0) {
+				logger.info("-> Deposit amount is less than zero");
+				return;
+			}
+
 			logger.info(
 				`-> Proccessing deposit transaction: ${amount}JPYC to @${user.twitter_id}`
 			);
