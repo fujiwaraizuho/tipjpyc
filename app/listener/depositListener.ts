@@ -17,8 +17,8 @@ const main = async () => {
 
 	logger.info("--- Welcome to tipJPYC Deposit Listener! ---");
 
-	let contract;
-	let provider;
+	let contract: ethers.Contract;
+	let provider: ethers.providers.AlchemyProvider;
 
 	try {
 		logger.info("-> Try connection database...");
@@ -27,7 +27,7 @@ const main = async () => {
 		// web3周りの設定
 		const rpc = getConfig("RPC_WSS");
 		const contractAddess = getConfig("JPYC_CONTRACT_ADDRESS");
-		const network = "rinkeby";
+		const network = getConfig("NETWORK");
 		const alchemyKey = getConfig("ALCHEMY_KEY");
 		const webSocketProvider = new ethers.providers.WebSocketProvider(rpc);
 		provider = new ethers.providers.AlchemyProvider(network, alchemyKey);
