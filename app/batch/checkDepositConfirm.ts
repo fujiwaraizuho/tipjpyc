@@ -146,4 +146,9 @@ const main = async () => {
 	exit(0);
 };
 
+// 1分ごとの実行なので誤爆が起きないように
+if (new Date().getSeconds() !== 0) {
+	exit(0);
+}
+
 main();
