@@ -4,6 +4,10 @@ import { getLogger } from "../../utils/logger";
 import { canBalanceCommand } from "../../utils/permission";
 import { getUser } from "../../utils/user";
 import { Transaction } from "../../../database/entity/Transaction";
+import {
+	DepositQueue,
+	DepositQueueStatus,
+} from "../../../database/entity/DepositQueue";
 
 const logger = getLogger();
 
@@ -31,12 +35,24 @@ const exec = async (execUser: UserV2, tweet: TweetV2, client: TwitterApi) => {
 		})
 		.getRawOne<{ balance: number }>();
 
-	logger.info(`-> ${balance}JPYC`);
+	const { unconfirmBalance } = await getRepository(DepositQueue)
+		.createQueryBuilder("depositQueue")
+		.select("SUM(depositQueue.amount)", "unconfirmBalance")
+		.where("depositQueue.user_id = :user_id", {
+			user_id: user.id,
+		})
+		.andWhere("depositQueue.status = :status", {
+			status: DepositQueueStatus.UNCONFIRM,
+		})
+		.getRawOne<{ unconfirmBalance: number }>();
+
+	logger.info(`-> ${balance}JPYC (uncofirm: ${unconfirmBalance}JPYC)`);
 
 	await client.v2.reply(
-		[`残高は ${balance} JPYCです!`, `残高は ${balance} JPYCですっ!`][
-			Math.floor(Math.random() * 2)
-		],
+		[
+			`残高は ${balance} JPYCです! (承認待ち: ${unconfirmBalance} JPYC)`,
+			`残高は ${balance} JPYCですっ! (承認待ち: ${unconfirmBalance} JPYC)`,
+		][Math.floor(Math.random() * 2)],
 		tweet.id
 	);
 };
