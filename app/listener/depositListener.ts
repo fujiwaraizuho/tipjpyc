@@ -39,9 +39,6 @@ const main = async () => {
 		`-> Listening transfer event on countract addres of ${contract.address}`
 	);
 
-	const queryRunner = getConnection().createQueryRunner();
-	await queryRunner.connect();
-
 	try {
 		contract.on("Transfer", async (_, to, value, event) => {
 			const amount = Math.floor(
@@ -78,6 +75,9 @@ const main = async () => {
 			logger.info(
 				`-> Proccessing deposit tx: ${amount} JPYC to ${user.id} (${event.transactionHash})`
 			);
+
+			const queryRunner = getConnection().createQueryRunner();
+			await queryRunner.connect();
 
 			await queryRunner.startTransaction();
 
