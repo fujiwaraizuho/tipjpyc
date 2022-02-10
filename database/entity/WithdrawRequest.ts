@@ -39,6 +39,7 @@ export class WithdrawRequest extends BaseEntity {
 	@Column({
 		type: "varchar",
 		unique: true,
+		nullable: true,
 	})
 	txid: string;
 
