@@ -35,7 +35,7 @@ const exec = async (execUser: UserV2, tweet: TweetV2, client: TwitterApi) => {
 		})
 		.getRawOne<{ balance: number }>();
 
-	const { unconfirmBalance } = await getRepository(DepositQueue)
+	let { unconfirmBalance } = await getRepository(DepositQueue)
 		.createQueryBuilder("depositQueue")
 		.select("SUM(depositQueue.amount)", "unconfirmBalance")
 		.where("depositQueue.user_id = :user_id", {
@@ -45,6 +45,10 @@ const exec = async (execUser: UserV2, tweet: TweetV2, client: TwitterApi) => {
 			status: DepositQueueStatus.UNCONFIRM,
 		})
 		.getRawOne<{ unconfirmBalance: number }>();
+
+	if (unconfirmBalance === null) {
+		unconfirmBalance = 0;
+	}
 
 	logger.info(`-> ${balance}JPYC (uncofirm: ${unconfirmBalance}JPYC)`);
 
