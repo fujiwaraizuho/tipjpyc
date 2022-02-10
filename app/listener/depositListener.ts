@@ -1,16 +1,13 @@
 import { exit } from "process";
 import { createConnection, getConnection } from "typeorm";
-import { danger, info } from "../utils/discord";
+import { danger } from "../utils/discord";
 import { getLogger } from "../utils/logger";
 import { ethers } from "ethers";
 import { User } from "../../database/entity/User";
-import {
-	DepositHistory,
-	NetworkType,
-} from "../../database/entity/DepositHistory";
-import { CommandType, Transaction } from "../../database/entity/Transaction";
+import { NetworkType } from "../../database/entity/DepositHistory";
 import jpycv1Abi from "../../abis/JPYCV1Abi";
 import { getConfig } from "../utils/config";
+import { DepositQueue } from "../../database/entity/DepositQueue";
 
 const main = async () => {
 	const logger = getLogger();
@@ -18,19 +15,15 @@ const main = async () => {
 	logger.info("--- Welcome to tipJPYC Deposit Listener! ---");
 
 	let contract: ethers.Contract;
-	let provider: ethers.providers.AlchemyProvider;
 
 	const rpc = getConfig("RPC_WSS");
 	const contractAddess = getConfig("JPYC_CONTRACT_ADDRESS");
-	const network = getConfig("NETWORK_TYPE");
-	const alchemyKey = getConfig("ALCHEMY_API_KEY");
 
 	try {
 		logger.info("-> Try connection database...");
 		await createConnection();
 
 		const webSocketProvider = new ethers.providers.WebSocketProvider(rpc);
-		provider = new ethers.providers.AlchemyProvider(network, alchemyKey);
 		contract = new ethers.Contract(
 			contractAddess,
 			jpycv1Abi,
@@ -38,7 +31,7 @@ const main = async () => {
 		);
 	} catch (err) {
 		logger.error("Database Connection Error!");
-		await danger("Database Connection ERROR!", String(err));
+		await danger("Database Connection ERROR!", JSON.stringify(err));
 		exit();
 	}
 
@@ -46,17 +39,23 @@ const main = async () => {
 		`-> Listening transfer event on countract addres of ${contract.address}`
 	);
 
+	const queryRunner = getConnection().createQueryRunner();
+	await queryRunner.connect();
+
 	try {
-		contract.on("Transfer", async (from, to, value, event) => {
+		contract.on("Transfer", async (_, to, value, event) => {
 			const amount = Math.floor(
 				Number.parseInt(ethers.utils.formatEther(value))
 			);
 
-			logger.info(
-				`-> Transfer ${amount}JPYC to ${to} (${event.transactionHash})`
-			);
+			if (amount === 0) {
+				logger.info("-> Deposit amount is less than zero");
+				return;
+			}
 
-			await provider.waitForTransaction(event.transactionHash, 3, 150000);
+			logger.info(
+				`-> Transfer ${amount} JPYC to ${to} (${event.transactionHash})`
+			);
 
 			const user = await User.findOne({
 				address: to,
@@ -67,67 +66,52 @@ const main = async () => {
 				return;
 			}
 
-			const checkDepositHistory = await DepositHistory.findOne({
+			const checkDepositQueue = await DepositQueue.findOne({
 				txid: event.transactionHash,
 			});
 
-			if (checkDepositHistory !== undefined) {
-				logger.info("-> Ignore same transaction hash");
-				return;
-			}
-
-			if (amount === 0) {
-				logger.info("-> Deposit amount is less than zero");
+			if (checkDepositQueue !== undefined) {
+				logger.info(`-> Ignore same txid (${event.transactionHash})`);
 				return;
 			}
 
 			logger.info(
-				`-> Proccessing deposit transaction: ${amount}JPYC to ${user.id} (${event.transactionHash})`
+				`-> Proccessing deposit tx: ${amount} JPYC to ${user.id} (${event.transactionHash})`
 			);
 
-			const queryRunner = getConnection().createQueryRunner();
-
-			await queryRunner.connect();
 			await queryRunner.startTransaction();
 
 			try {
-				const transaction = new Transaction();
+				const depositQueue = new DepositQueue();
 
-				transaction.user_id = user.id;
-				transaction.amount = amount;
-				transaction.command_type = CommandType.DEPOSIT;
+				depositQueue.user_id = user.id;
+				depositQueue.txid = event.transactionHash;
+				depositQueue.amount = amount;
+				depositQueue.network_type = NetworkType.POLYGON;
 
-				await queryRunner.manager.save(Transaction, transaction);
-
-				const depositHistory = new DepositHistory();
-
-				depositHistory.transaction_id = transaction.id;
-				depositHistory.txid = event.transactionHash;
-				depositHistory.amount = amount;
-				depositHistory.network_type = NetworkType.POLYGON;
-
-				await queryRunner.manager.save(DepositHistory, depositHistory);
+				await queryRunner.manager.save(DepositQueue, depositQueue);
 
 				await queryRunner.commitTransaction();
 			} catch (err) {
 				await queryRunner.rollbackTransaction();
 
 				logger.error(err);
-				await danger("Process Error!", String(err));
+				await danger("Process Error!", JSON.stringify(err));
 
 				return;
 			} finally {
 				await queryRunner.release();
 			}
 
-			logger.info(`-> Deposited (${event.transactionHash})`);
+			logger.info(`-> Deposit Queued (${event.transactionHash})`);
 		});
 	} catch (err) {
 		logger.error(err);
 		await danger("Process Error!", JSON.stringify(err));
+		exit();
 	}
 
-	logger.info("-> tipjpyc deposit listener setup is finished!");
+	logger.info("-> TipJPYC deposit listener setup is finished!");
 };
 
 main();

@@ -125,7 +125,7 @@ const exec = async (
 		await queryRunner.rollbackTransaction();
 
 		logger.error(err);
-		await danger("Process Error!", String(err));
+		await danger("Process Error!", JSON.stringify(err));
 
 		await client.v2.reply(
 			`ごめんなさい、投げ銭に失敗しました…\nしばらく待ってからやり直してみてください!`,
