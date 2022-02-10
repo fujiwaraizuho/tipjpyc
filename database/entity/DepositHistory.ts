@@ -7,6 +7,7 @@ import {
 	OneToOne,
 	PrimaryGeneratedColumn,
 } from "typeorm";
+import { DepositQueue } from "./DepositQueue";
 import { Transaction } from "./Transaction";
 
 export enum NetworkType {
@@ -21,6 +22,11 @@ export class DepositHistory extends BaseEntity {
 		type: "bigint",
 	})
 	id: number;
+
+	@Column({
+		type: "bigint",
+	})
+	deposit_queue_id: number;
 
 	@Column({
 		type: "bigint",
@@ -52,4 +58,8 @@ export class DepositHistory extends BaseEntity {
 	@OneToOne(() => Transaction, (transaction) => transaction.depositHistory)
 	@JoinColumn([{ name: "transaction_id", referencedColumnName: "id" }])
 	transaction: Transaction;
+
+	@OneToOne(() => DepositQueue, (depositQueue) => depositQueue.depositHistory)
+	@JoinColumn([{ name: "deposit_queue_id", referencedColumnName: "id" }])
+	depositQueue: DepositQueue;
 }

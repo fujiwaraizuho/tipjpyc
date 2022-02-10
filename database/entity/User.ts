@@ -7,6 +7,7 @@ import {
 	UpdateDateColumn,
 	OneToMany,
 } from "typeorm";
+import { DepositQueue } from "./DepositQueue";
 
 import { Transaction } from "./Transaction";
 
@@ -46,6 +47,9 @@ export class User extends BaseEntity {
 
 	@OneToMany(() => Transaction, (transaction) => transaction.user)
 	transactions: Transaction[];
+
+	@OneToMany(() => DepositQueue, (depositQueue) => depositQueue.user)
+	depositQueues: DepositQueue[];
 
 	@CreateDateColumn({
 		name: "created_at",
