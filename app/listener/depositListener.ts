@@ -56,11 +56,7 @@ const main = async () => {
 				`-> Transfer ${amount}JPYC to ${to} (${event.transactionHash})`
 			);
 
-			await provider.waitForTransaction(
-				event.transactionHash,
-				3,
-				Infinity
-			);
+			await provider.waitForTransaction(event.transactionHash, 3, 150000);
 
 			const user = await User.findOne({
 				address: to,
