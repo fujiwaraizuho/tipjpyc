@@ -43,25 +43,31 @@ const main = async () => {
 	}
 
 	logger.info(
-		`-> Listening transfer event on countract addres of ${contract}`
+		`-> Listening transfer event on countract addres of ${contract.address}`
 	);
 
 	try {
 		contract.on("Transfer", async (from, to, value, event) => {
-			logger.info(
-				`-> Transfer ${value}JPYC from ${from} to ${value}, txhash is ${event.transactionHash}`
+			const amount = Math.floor(
+				Number.parseInt(ethers.utils.formatEther(value))
 			);
 
-			// 1confirmationまつ
-			await provider.waitForTransaction(event.transactionHash, 1);
+			logger.info(
+				`-> Transfer ${amount}JPYC to ${to} (${event.transactionHash})`
+			);
+
+			await provider.waitForTransaction(
+				event.transactionHash,
+				3,
+				Infinity
+			);
 
 			const user = await User.findOne({
 				address: to,
 			});
 
-			// userのアドレスとtoが一致しなかったら終了
 			if (user === undefined) {
-				logger.info("-> Ignore event");
+				logger.info(`-> Ignore event (${event.transactionHash})`);
 				return;
 			}
 
@@ -69,15 +75,10 @@ const main = async () => {
 				txid: event.transactionHash,
 			});
 
-			// 同じtxhashがあったら終了
-			if (checkDepositHistory != undefined) {
+			if (checkDepositHistory !== undefined) {
 				logger.info("-> Ignore same transaction hash");
 				return;
 			}
-
-			const amount = Math.floor(
-				Number.parseInt(ethers.utils.formatEther(value))
-			);
 
 			if (amount === 0) {
 				logger.info("-> Deposit amount is less than zero");
@@ -85,7 +86,7 @@ const main = async () => {
 			}
 
 			logger.info(
-				`-> Proccessing deposit transaction: ${amount}JPYC to @${user.twitter_id}`
+				`-> Proccessing deposit transaction: ${amount}JPYC to ${user.id} (${event.transactionHash})`
 			);
 
 			const queryRunner = getConnection().createQueryRunner();
@@ -123,16 +124,11 @@ const main = async () => {
 				await queryRunner.release();
 			}
 
-			logger.info("-> Deposited");
-
-			await info(
-				"入金が完了しました",
-				`Amount: ${amount}JPYC\nTo: ${user.twitter_id}`
-			);
+			logger.info(`-> Deposited (${event.transactionHash})`);
 		});
 	} catch (err) {
 		logger.error(err);
-		await danger("Process Error!", String(err));
+		await danger("Process Error!", JSON.stringify(err));
 	}
 
 	logger.info("-> tipjpyc deposit listener setup is finished!");
