@@ -37,10 +37,7 @@ const main = async () => {
 	logger.info("-> connected database & provider");
 	logger.info(`-> Fetch deposit with status = UNCONFIRM ...`);
 
-	const queryRunner = getConnection().createQueryRunner();
-	await queryRunner.connect();
-
-	const depositQueues = await queryRunner.manager.find(DepositQueue, {
+	const depositQueues = await DepositQueue.find({
 		select: ["id", "status", "txid"],
 		where: {
 			status: DepositQueueStatus.UNCONFIRM,
@@ -77,6 +74,9 @@ const main = async () => {
 
 			continue;
 		}
+
+		const queryRunner = getConnection().createQueryRunner();
+		await queryRunner.connect();
 
 		await queryRunner.startTransaction();
 
