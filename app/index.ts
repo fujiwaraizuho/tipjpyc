@@ -1,6 +1,6 @@
 import TwitterAPI, { ETwitterStreamEvent } from "twitter-api-v2";
 import { getConfig } from "./utils/config";
-import { danger } from "./utils/discord";
+import { danger, info } from "./utils/discord";
 import { getLogger } from "./utils/logger";
 import { createConnection } from "typeorm";
 import { exit } from "process";
@@ -33,7 +33,7 @@ const main = async () => {
 		await createConnection();
 	} catch (err) {
 		logger.error("Database Connection Error!");
-		await danger("Database Connection ERROR!", String(err));
+		await danger("Database Connection ERROR!", JSON.stringify(err));
 		exit();
 	}
 
@@ -107,19 +107,20 @@ const main = async () => {
 		} catch (err) {
 			// エラーが生じたので処理ができなかった旨の返信を返す
 			logger.error(err);
-			await danger("Process Error!", String(err));
+			await danger("Process Error!", JSON.stringify(err));
 		}
 
 		logger.info(`-> Done...`);
 	});
 
-	stream.on(ETwitterStreamEvent.ReconnectAttempt, () => {
+	stream.on(ETwitterStreamEvent.ReconnectAttempt, async () => {
 		logger.info("-> Retry connect TwitterStream");
+		await info("Retry Twitter Streaming API!", "OK");
 	});
 
 	stream.on(ETwitterStreamEvent.Error, async (payload) => {
-		logger.error("TwitterStream API Connection Error!");
-		await danger("Twitter Streaming API ERROR!", String(payload));
+		logger.error(payload);
+		await danger("Twitter Streaming API ERROR!", JSON.stringify(payload));
 	});
 
 	await stream.connect({

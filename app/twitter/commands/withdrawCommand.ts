@@ -109,7 +109,7 @@ const exec = async (
 		await queryRunner.rollbackTransaction();
 
 		logger.error(err);
-		await danger("Process Error!", String(err));
+		await danger("Process Error!", JSON.stringify(err));
 
 		await client.v2.reply(
 			"ごめんなさい、出金リクエストに失敗しました…\nしばらく待ってからやり直してみてください!",
