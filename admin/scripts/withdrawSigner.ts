@@ -6,7 +6,7 @@ import {
 	WithdrawRequest,
 	WithdrawStatus,
 } from "../../database/entity/WithdrawRequest";
-import { LedgerSigner } from "@ethersproject/hardware-wallets";
+import { LedgerSigner } from "../../app/utils/ledger";
 import { ethers } from "ethers";
 import { getConfig } from "../../app/utils/config";
 import jpycV1Abi from "../../abis/JPYCV1Abi";
