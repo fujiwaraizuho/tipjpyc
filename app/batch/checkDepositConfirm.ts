@@ -6,13 +6,14 @@ import {
 	DepositQueueStatus,
 } from "../../database/entity/DepositQueue";
 import { getConfig } from "../utils/config";
-import { danger, warning } from "../utils/discord";
+import { danger, info, warning } from "../utils/discord";
 import { getLogger } from "../utils/logger";
 import { CommandType, Transaction } from "../../database/entity/Transaction";
 import {
 	DepositHistory,
 	NetworkType,
 } from "../../database/entity/DepositHistory";
+import { isProduction } from "../utils/env";
 
 const main = async () => {
 	const logger = getLogger();
@@ -92,6 +93,12 @@ const main = async () => {
 				.setLock("pessimistic_write_or_fail")
 				.getOne();
 
+			lockedDepositQueue.user = await queryRunner.manager
+				.createQueryBuilder()
+				.relation(DepositQueue, "user")
+				.of(lockedDepositQueue)
+				.loadOne();
+
 			logger.info(`[${depositQueue.id}] Get Locked.`);
 
 			if (lockedDepositQueue.status === DepositQueueStatus.CONFIRMED) {
@@ -130,11 +137,24 @@ const main = async () => {
 			await queryRunner.commitTransaction();
 
 			logger.info(`[${depositQueue.id}] Deposited.`);
+
+			if (isProduction()) {
+				await info(
+					"入金が完了しました",
+					`Amount: ${transaction.amount}JPYC\nTo: https://twitter.com/intent/user?user_id=${lockedDepositQueue.user.twitter_id}\n`,
+					`https://etherscan.io/tx/${lockedDepositQueue.txid}`
+				);
+			}
 		} catch (err) {
 			await queryRunner.rollbackTransaction();
 
 			logger.info(`[${depositQueue.id}] Skip DepositQueue.`);
 			logger.error(err);
+
+			await warning(
+				"対象行のロックが取れなかったか、不明なエラーです",
+				JSON.stringify(err)
+			);
 
 			continue;
 		} finally {
