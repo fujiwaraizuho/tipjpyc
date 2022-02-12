@@ -58,9 +58,13 @@ const main = async () => {
 	console.log(`-> UserID[ ${userIds} ]からJPYCを回収します`);
 
 	for (let i = 0; i < userIds.length; i++) {
+		const adminAddress = signer.getAddress("m/44'/60'/1'/1");
 		const path = `m/44'/60'/1'/${userIds[i]}`;
 		const userAddress = await signer.getAddress(path);
 		const userNativeTokenBalance = await provider.getBalance(userAddress);
+
+		let signedTx;
+		let sendTx;
 
 		if (Number.parseInt(userNativeTokenBalance) === 0) {
 			tx = {
@@ -70,13 +74,50 @@ const main = async () => {
 				gasPrice: "0x218711a00",
 				gasLimit: "0x5208",
 			};
-			let signedTx = signer.signTransaction(tx, path);
-			let sendTx = await provider.sendTransaction(signedTx);
+			signedTx = signer.signTransaction(tx, path);
+			sendTx = await provider.sendTransaction(signedTx);
 
 			console.log(`->ガス代用のネイティブトークンを送金`);
-			console.log(`->txhash : ${sendTx.hash}`);
+			console.log(`->txhash:${sendTx.hash}`);
 			await sendTx.wait();
 			console.log(`->ガス代用のネイティブトークンの送金完了`);
+		}
+
+		const allowance = await jpycV1Contract.allowance(
+			userAddress,
+			adminAddress
+		);
+
+		let iface: ethers.utils.Interface;
+		let functionData: string;
+
+		if (Number.parseInt(allowance) != 0) {
+			// approve
+			iface = new ethers.utils.Interface([
+				"function approve(address spender, uint256 amount)",
+			]);
+			functionData = iface.encodeFunctionData("approve", [
+				adminAddress,
+				"100000000000000000000000000000000000000000000",
+			]);
+			//Todo: approveする額の決定
+
+			tx = {
+				from: userAddress,
+				to: contractAddress,
+				value: "",
+				data: functionData,
+			};
+
+			signedTx = signer.signTransaction(tx, path);
+			sendTx = await provider.sendTransaction(signedTx);
+
+			console.log("->利用者のJPYCを管理者にAPPROVE");
+			console.log(
+				`https://${networkType}.etherscan.io/tx/${sendTx.hash}`
+			);
+			await sendTx.wait();
+			console.log("->APPROVE完了");
 		}
 	}
 
