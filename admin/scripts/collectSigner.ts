@@ -28,7 +28,6 @@ const main = async () => {
 
 	let provider: ethers.providers.AlchemyProvider;
 	let signer: LedgerSigner;
-	let tx: ethers.providers.TransactionRequest;
 
 	try {
 		provider = new ethers.providers.AlchemyProvider(
@@ -52,38 +51,43 @@ const main = async () => {
 	console.info("------------------");
 	console.log("Cheking deposit history");
 	// Todo : deposit historyで特定の日時以降に保存されたデータのuserIdを取得する
+	const userIds = ["1", "3"];
 
-	const userIds = ["0", "1"];
 	console.info("------------------");
 	console.log(`-> UserID[ ${userIds} ]からJPYCを回収します`);
 
 	for (let i = 0; i < userIds.length; i++) {
-		const adminPath = "m/44'/60'/1'/1";
-		const adminAddress = signer.getAddress(adminPath);
+		const adminPath = "m/44'/60'/0'/1";
+		const adminAddress = await signer.getAddress(adminPath);
+
 		const path = `m/44'/60'/1'/${userIds[i]}`;
 		const userAddress = await signer.getAddress(path);
+
+		const chainId = 4; // todo:環境変数にする？
 		const userNativeTokenBalance = await provider.getBalance(userAddress);
 
-		let signedTx;
-		let sendTx;
+		let tx: ethers.providers.TransactionRequest;
+		let signedTx: string;
+		let sendTx: ethers.providers.TransactionResponse;
 
-		if (Number.parseInt(userNativeTokenBalance) === 0) {
+		if (userNativeTokenBalance.isZero()) {
 			console.log(`>ガス代用のネイティブトークンを送金します`);
 
 			tx = {
+				chainId: chainId,
 				to: userAddress,
 				value: ethers.utils.parseEther("0.001"),
 				data: "",
 				gasPrice: "0x218711a00",
 				gasLimit: "0x5208",
 			};
-			signedTx = signer.signTransaction(tx, path);
+			signedTx = await signer.signTransaction(tx, path);
 			sendTx = await provider.sendTransaction(signedTx);
 
 			console.log(`
 				-> https://${networkType}.etherscan.io/tx/${sendTx.hash}
 			`);
-			await sendTx.wait();
+			await sendTx.wait(3);
 			console.log(`>ガス代用のネイティブトークンの送金完了`);
 		}
 
@@ -95,7 +99,7 @@ const main = async () => {
 		let iface: ethers.utils.Interface;
 		let functionData: string;
 
-		if (Number.parseInt(allowance) != 0) {
+		if (allowance.isZero()) {
 			console.log(">利用者のJPYCを管理者にAPPROVEします");
 
 			iface = new ethers.utils.Interface([
@@ -108,19 +112,22 @@ const main = async () => {
 			//Todo: approveする額の決定
 
 			tx = {
+				chainId: chainId,
 				from: userAddress,
 				to: contractAddress,
 				value: "",
 				data: functionData,
+				gasPrice: ethers.utils.parseUnits("1.1", "gwei"),
+				gasLimit: 500000, //Todo: gaslimitの適正値は要調査
 			};
 
-			signedTx = signer.signTransaction(tx, path);
+			signedTx = await signer.signTransaction(tx, path);
 			sendTx = await provider.sendTransaction(signedTx);
 
 			console.log(
 				`-> https://${networkType}.etherscan.io/tx/${sendTx.hash}`
 			);
-			await sendTx.wait();
+			await sendTx.wait(3);
 			console.log(">APPROVE完了");
 		}
 
@@ -140,17 +147,20 @@ const main = async () => {
 		]);
 
 		tx = {
+			chainId: chainId,
 			from: userAddress,
 			to: contractAddress,
 			value: "",
 			data: functionData,
+			gasPrice: ethers.utils.parseUnits("1.1", "gwei"),
+			gasLimit: 500000, //Todo: gaslimitの適正値は要調査
 		};
 
-		signedTx = signer.signTransaction(tx, path);
+		signedTx = await signer.signTransaction(tx, path);
 		sendTx = await provider.sendTransaction(signedTx);
 
 		console.log(`-> https://${networkType}.etherscan.io/tx/${sendTx.hash}`);
-		await sendTx.wait();
+		await sendTx.wait(3);
 		console.log(">JPYCの送金完了");
 	}
 };
