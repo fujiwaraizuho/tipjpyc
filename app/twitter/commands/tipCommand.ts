@@ -58,6 +58,16 @@ const exec = async (
 		return;
 	}
 
+	if (execUser.id === toTwitterUser.data.id) {
+		await client.v2.reply(
+			`申し訳ありません! 自分自身には投げ銭できません`,
+			tweet.id
+		);
+
+		logger.info("-> invalid self user");
+		return;
+	}
+
 	if (!Number.isSafeInteger(Number(amount))) {
 		await client.v2.reply(
 			`申し訳ありません!\n投げ銭の額が正の整数でないか不正です。`,
