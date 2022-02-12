@@ -58,7 +58,8 @@ const main = async () => {
 	console.log(`-> UserID[ ${userIds} ]からJPYCを回収します`);
 
 	for (let i = 0; i < userIds.length; i++) {
-		const adminAddress = signer.getAddress("m/44'/60'/1'/1");
+		const adminPath = "m/44'/60'/1'/1";
+		const adminAddress = signer.getAddress(adminPath);
 		const path = `m/44'/60'/1'/${userIds[i]}`;
 		const userAddress = await signer.getAddress(path);
 		const userNativeTokenBalance = await provider.getBalance(userAddress);
@@ -67,6 +68,8 @@ const main = async () => {
 		let sendTx;
 
 		if (Number.parseInt(userNativeTokenBalance) === 0) {
+			console.log(`>ガス代用のネイティブトークンを送金します`);
+
 			tx = {
 				to: userAddress,
 				value: ethers.utils.parseEther("0.001"),
@@ -77,10 +80,11 @@ const main = async () => {
 			signedTx = signer.signTransaction(tx, path);
 			sendTx = await provider.sendTransaction(signedTx);
 
-			console.log(`->ガス代用のネイティブトークンを送金`);
-			console.log(`->txhash:${sendTx.hash}`);
+			console.log(`
+				-> https://${networkType}.etherscan.io/tx/${sendTx.hash}
+			`);
 			await sendTx.wait();
-			console.log(`->ガス代用のネイティブトークンの送金完了`);
+			console.log(`>ガス代用のネイティブトークンの送金完了`);
 		}
 
 		const allowance = await jpycV1Contract.allowance(
@@ -92,7 +96,8 @@ const main = async () => {
 		let functionData: string;
 
 		if (Number.parseInt(allowance) != 0) {
-			// approve
+			console.log(">利用者のJPYCを管理者にAPPROVEします");
+
 			iface = new ethers.utils.Interface([
 				"function approve(address spender, uint256 amount)",
 			]);
@@ -112,54 +117,42 @@ const main = async () => {
 			signedTx = signer.signTransaction(tx, path);
 			sendTx = await provider.sendTransaction(signedTx);
 
-			console.log("->利用者のJPYCを管理者にAPPROVE");
 			console.log(
-				`https://${networkType}.etherscan.io/tx/${sendTx.hash}`
+				`-> https://${networkType}.etherscan.io/tx/${sendTx.hash}`
 			);
 			await sendTx.wait();
-			console.log("->APPROVE完了");
+			console.log(">APPROVE完了");
 		}
+
+		const balance = await jpycV1Contract.balanceOf(userAddress);
+
+		console.info(
+			`> ${balance}JPYCをUserId ${userIds[i]}(${userAddress})から${adminAddress}に送金します`
+		);
+
+		iface = new ethers.utils.Interface([
+			"function transferFrom(address sender, address recipient, uint256 amount)",
+		]);
+		functionData = iface.encodeFunctionData("transferFrom", [
+			userAddress,
+			adminAddress,
+			balance,
+		]);
+
+		tx = {
+			from: userAddress,
+			to: contractAddress,
+			value: "",
+			data: functionData,
+		};
+
+		signedTx = signer.signTransaction(tx, path);
+		sendTx = await provider.sendTransaction(signedTx);
+
+		console.log(`-> https://${networkType}.etherscan.io/tx/${sendTx.hash}`);
+		await sendTx.wait();
+		console.log(">JPYCの送金完了");
 	}
-
-	const address = await signer.getAddress();
-	const balance = await jpycV1Contract.balanceOf(address);
-
-	console.log(`-> Admin Address: ${address}`);
-	console.log(`-> All Balance: ${balance} JPYC`);
-	console.info("------------------");
-};
-
-const confirm = async (message: string, withdrawRequest: WithdrawRequest) => {
-	const answer = await (await question(`> ${message} (y/n/e): `))
-		.trim()
-		.toLowerCase();
-
-	if (answer !== "y" && answer !== "n") {
-		console.info("------------------");
-		console.info("> 終了処理を行います");
-
-		withdrawRequest.status = WithdrawStatus.UNBUSY;
-		await withdrawRequest.save();
-
-		console.info("> 終了処理が完了しました");
-		exit();
-	}
-
-	return answer === "y";
-};
-
-const question = (question: string): Promise<string> => {
-	const readlineInterface = createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	});
-
-	return new Promise((resolve) => {
-		readlineInterface.question(question, (answer) => {
-			resolve(answer);
-			readlineInterface.close();
-		});
-	});
 };
 
 main();
