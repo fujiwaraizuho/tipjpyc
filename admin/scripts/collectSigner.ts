@@ -7,7 +7,7 @@ import {
 	WithdrawStatus,
 } from "../../database/entity/WithdrawRequest";
 import { LedgerSigner } from "../../app/utils/ledger";
-import { ethers } from "ethers";
+import { ethers, providers } from "ethers";
 import { getConfig } from "../../app/utils/config";
 import jpycV1Abi from "../../abis/JPYCV1Abi";
 
@@ -26,11 +26,12 @@ const main = async () => {
 	const networkType = getConfig("NETWORK_TYPE");
 	const contractAddress = getConfig("JPYC_CONTRACT_ADDRESS");
 
+	let provider: ethers.providers.AlchemyProvider;
 	let signer: LedgerSigner;
-	let tx: ethers.providers.TransactionResponse;
+	let tx: ethers.providers.TransactionRequest;
 
 	try {
-		const provider = new ethers.providers.AlchemyProvider(
+		provider = new ethers.providers.AlchemyProvider(
 			networkType,
 			getConfig("ALCHEMY_API_KEY")
 		);
@@ -49,6 +50,35 @@ const main = async () => {
 	);
 
 	console.info("------------------");
+	console.log("Cheking deposit history");
+	// Todo : deposit historyで特定の日時以降に保存されたデータのuserIdを取得する
+
+	const userIds = ["0", "1"];
+	console.info("------------------");
+	console.log(`-> UserID[ ${userIds} ]からJPYCを回収します`);
+
+	for (let i = 0; i < userIds.length; i++) {
+		const path = `m/44'/60'/1'/${userIds[i]}`;
+		const userAddress = await signer.getAddress(path);
+		const userNativeTokenBalance = await provider.getBalance(userAddress);
+
+		if (Number.parseInt(userNativeTokenBalance) === 0) {
+			tx = {
+				to: userAddress,
+				value: ethers.utils.parseEther("0.001"),
+				data: "",
+				gasPrice: "0x218711a00",
+				gasLimit: "0x5208",
+			};
+			let signedTx = signer.signTransaction(tx, path);
+			let sendTx = await provider.sendTransaction(signedTx);
+
+			console.log(`->ガス代用のネイティブトークンを送金`);
+			console.log(`->txhash : ${sendTx.hash}`);
+			await sendTx.wait();
+			console.log(`->ガス代用のネイティブトークンの送金完了`);
+		}
+	}
 
 	const address = await signer.getAddress();
 	const balance = await jpycV1Contract.balanceOf(address);
