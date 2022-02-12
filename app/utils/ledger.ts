@@ -51,9 +51,12 @@ export class LedgerSigner extends BaseLedgerSigner {
 			value: tx.value || undefined,
 		};
 
-		const unsignedTx = ethers.utils.serializeTransaction(baseTx);
+		const unsignedTx = ethers.utils
+			.serializeTransaction(baseTx)
+			.substring(2);
+
 		const sig = await this._retry((eth) =>
-			eth.signTransaction(path, unsignedTx)
+			eth.signTransaction(path, unsignedTx, null)
 		);
 
 		return ethers.utils.serializeTransaction(baseTx, {
