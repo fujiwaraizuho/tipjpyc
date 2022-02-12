@@ -27,6 +27,7 @@ const main = async () => {
 	const contractAddress = getConfig("JPYC_CONTRACT_ADDRESS");
 
 	let signer: LedgerSigner;
+	let tx: ethers.providers.TransactionResponse;
 
 	try {
 		const provider = new ethers.providers.AlchemyProvider(
@@ -46,6 +47,8 @@ const main = async () => {
 		jpycV1Abi,
 		signer
 	);
+
+	console.info("------------------");
 
 	const address = await signer.getAddress();
 	const balance = await jpycV1Contract.balanceOf(address);
