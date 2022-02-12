@@ -1,5 +1,5 @@
 import { Provider } from "@ethersproject/abstract-provider";
-import { LedgerSigner as BaseLedgerSigner } from "@ethersproject/hardware-wallets";
+import { LedgerSigner as BaseLedgerSigner } from "@tipjpyc/hardware-wallets";
 import { ethers } from "ethers";
 
 export class LedgerSigner extends BaseLedgerSigner {
