@@ -23,14 +23,17 @@ const main = async () => {
 		exit();
 	}
 
+	const networkType = getConfig("NETWORK_TYPE");
+	const contractAddress = getConfig("JPYC_CONTRACT_ADDRESS");
+
 	let signer: LedgerSigner;
 
 	try {
 		const provider = new ethers.providers.AlchemyProvider(
-			getConfig("NETWORK_TYPE"),
+			networkType,
 			getConfig("ALCHEMY_API_KEY")
 		);
-		signer = new LedgerSigner(provider, "hid", "m/44'/60'/1'/0");
+		signer = new LedgerSigner(provider, "hid");
 	} catch (err) {
 		console.log(err);
 		console.error("Provider or Signer Error!");
@@ -39,7 +42,7 @@ const main = async () => {
 	}
 
 	const jpycV1Contract = new ethers.Contract(
-		getConfig("JPYC_CONTRACT_ADDRESS"),
+		contractAddress,
 		jpycV1Abi,
 		signer
 	);
