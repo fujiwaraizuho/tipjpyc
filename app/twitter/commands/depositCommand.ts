@@ -25,8 +25,8 @@ const exec = async (execUser: UserV2, tweet: TweetV2, client: TwitterApi) => {
 
 	await client.v2.reply(
 		[
-			`${user.address} にJPYCを送金してください!`,
-			`${user.address} にJPYCを送金してほしいな!`,
+			`${user.address} にJPYCを送金してください!\n小数点以下は入金されませんのでご注意ください。`,
+			`${user.address} にJPYCを送金してほしいな!\n小数点以下は入金されませんのでご注意ください。`,
 		][Math.floor(Math.random() * 2)],
 		tweet.id
 	);
