@@ -10,6 +10,9 @@ import { LedgerSigner } from "../../app/utils/ledger";
 import { ethers } from "ethers";
 import { getConfig } from "../../app/utils/config";
 import jpycV1Abi from "../../abis/JPYCV1Abi";
+import { AlchemyProvider } from "@ethersproject/providers";
+import TwitterAPI from "twitter-api-v2";
+import { CommandType, Transaction } from "../../database/entity/Transaction";
 
 const main = async () => {
 	console.info("--- Welcome to tipJPYC Withdraw Signer! ---");
@@ -23,10 +26,17 @@ const main = async () => {
 		exit();
 	}
 
+	const client = new TwitterAPI({
+		appKey: getConfig("TWITTER_APP_KEY"),
+		appSecret: getConfig("TWITTER_APP_SECRET"),
+		accessToken: getConfig("TWITTER_ACCESS_TOKEN"),
+		accessSecret: getConfig("TWITTER_ACCESS_SECRET"),
+	});
+
 	let signer: LedgerSigner;
 
 	try {
-		const provider = new ethers.providers.AlchemyProvider(
+		const provider = new AlchemyProvider(
 			getConfig("NETWORK_TYPE"),
 			getConfig("ALCHEMY_API_KEY")
 		);
@@ -45,13 +55,19 @@ const main = async () => {
 	);
 
 	const address = await signer.getAddress();
-	const balance = await jpycV1Contract.balanceOf(address);
 
-	console.log(`-> Admin Address: ${address}`);
-	console.log(`-> All Balance: ${balance} JPYC`);
-	console.info("------------------");
+	console.log(`-> AdminAddress: ${address}`);
 
 	for (;;) {
+		const balance = await jpycV1Contract.balanceOf(address);
+
+		console.log(
+			`-> Balance: ${Number.parseInt(
+				ethers.utils.formatEther(balance)
+			)} JPYC`
+		);
+		console.info("------------------");
+
 		const withdrawRequest = await WithdrawRequest.findOne(
 			{
 				status: WithdrawStatus.UNBUSY,
@@ -85,11 +101,89 @@ const main = async () => {
 		if (
 			await confirm("この出金リクエストを承認しますか？", withdrawRequest)
 		) {
+			console.info("> 出金処理を開始します...");
+
+			const tx = await jpycV1Contract.populateTransaction.transfer(
+				withdrawRequest.address,
+				ethers.utils.parseUnits(String(withdrawRequest.amount))
+			);
+
+			tx.chainId = 4;
+			tx.gasLimit = ethers.BigNumber.from("300000");
+
+			console.info("> Ledger でトランザクションに署名してください");
+
+			let sendTx: ethers.providers.TransactionResponse;
+
+			try {
+				sendTx = await signer.sendTransaction(tx);
+			} catch (err) {
+				withdrawRequest.status = WithdrawStatus.FAILED;
+				await withdrawRequest.save();
+
+				console.error(err);
+				console.info(
+					"> 出金処理が失敗しました、手動で処理しなおしてください"
+				);
+
+				continue;
+			}
+
+			console.info(`> https://rinkeby.etherscan.io/tx/${sendTx.hash}`);
+
+			const result = await sendTx.wait(1);
+
+			if (!result.status) {
+				withdrawRequest.status = WithdrawStatus.FAILED;
+				await withdrawRequest.save();
+
+				console.info(result);
+				console.info(
+					"> 出金処理が失敗しました、手動で処理しなおしてください"
+				);
+
+				continue;
+			}
+
+			console.info("> トランザクションがネットワークに承認されました");
+
+			withdrawRequest.txid = result.transactionHash;
+			withdrawRequest.status = WithdrawStatus.APPROVAL;
+			await withdrawRequest.save();
+
+			console.info("> WithdrawRequest を更新しました");
+
+			await client.v2.reply(
+				`${withdrawRequest.amount}JPYC の出金が完了しました!\nhttps://rinkeby.etherscan.io/tx/${sendTx.hash}`,
+				withdrawRequest.transaction.tweet_id
+			);
+
+			console.info("> 出金処理が完了しました");
 			console.info("------------------");
-			// 出金処理を行ってステータスを ACCEPT に変更 (失敗したら FAILED に変更)
 		} else {
+			console.info("> 出金リクエストを非承認とします");
+
+			withdrawRequest.status = WithdrawStatus.DISAPPROVAL;
+			await withdrawRequest.save();
+
+			console.info("> WithdrawRequest を更新しました");
+
+			const transaction = new Transaction();
+
+			transaction.user_id = withdrawRequest.transaction.user_id;
+			transaction.amount = withdrawRequest.amount;
+			transaction.command_type = CommandType.OTHER;
+			transaction.description = "出金非承認による返金";
+
+			await transaction.save();
+
+			await client.v2.reply(
+				`${withdrawRequest.amount}JPYC の出金が承認されませんでした。\nご不明な点があれば DM までご連絡ください。`,
+				withdrawRequest.transaction.tweet_id
+			);
+
+			console.info("> 返金処理が完了しました");
 			console.info("------------------");
-			// ステータスを REJECT に変更して残高を返す
 		}
 	}
 };
