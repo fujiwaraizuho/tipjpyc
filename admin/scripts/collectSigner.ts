@@ -2,15 +2,13 @@ import { exit } from "process";
 import { createInterface } from "readline";
 import { createConnection, getRepository, SimpleConsoleLogger } from "typeorm";
 import { danger } from "../../app/utils/discord";
-import {
-	WithdrawRequest,
-	WithdrawStatus,
-} from "../../database/entity/WithdrawRequest";
 import { LedgerSigner } from "../../app/utils/ledger";
-import { ethers, providers } from "ethers";
+import { ethers } from "ethers";
 import { getConfig } from "../../app/utils/config";
 import jpycV1Abi from "../../abis/JPYCV1Abi";
 import { User } from "../../database/entity/User";
+
+const networkType = getConfig("NETWORK_TYPE");
 
 const main = async () => {
 	console.info("--- Welcome to tipJPYC Withdraw Signer! ---");
@@ -24,7 +22,6 @@ const main = async () => {
 		exit();
 	}
 
-	const networkType = getConfig("NETWORK_TYPE");
 	const contractAddress = getConfig("JPYC_CONTRACT_ADDRESS");
 
 	let provider: ethers.providers.AlchemyProvider;
@@ -50,8 +47,8 @@ const main = async () => {
 	);
 
 	console.info("------------------");
-	console.log("> Cheking deposit address balance");
-	// Todo : クエリーのやり方あってますか？
+	console.log("> Cheking deposit addresses balance");
+
 	const users = await getRepository(User)
 		.createQueryBuilder("user")
 		.select(["user.id", "user.address"])
@@ -60,6 +57,7 @@ const main = async () => {
 	let targetUsers = [];
 	for (let i = 0; i < users.length; i++) {
 		const userBalance = await jpycV1Contract.balanceOf(users[i].address);
+
 		if (Number(ethers.utils.formatUnits(userBalance, 18)) >= 50) {
 			targetUsers.push(users[i]);
 		}
@@ -74,46 +72,50 @@ const main = async () => {
 	console.log(`-> ${targetUsers.length}つの入金アドレスからJPYCを回収します`);
 
 	for (let i = 0; i < targetUsers.length; i++) {
-		const adminPath = "m/44'/60'/0'/1";
+		const adminPath = "m/44'/60'/1'/0";
 		const adminAddress = await signer.getAddress(adminPath);
 
-		const path = `m/44'/60'/1'/${targetUsers[i]}`;
+		const targetUser = targetUsers[i];
+		const userPath = `m/44'/60'/0'/${targetUser.id}`;
 
-		const chainId = 4; // todo:環境変数にする？
-		const userNativeTokenBalance = await provider.getBalance(
-			targetUsers[i].address
-		);
+		const chainId = 4;
 
 		let tx: ethers.providers.TransactionRequest;
-		let signedTx: string;
-		let sendTx: ethers.providers.TransactionResponse;
+
+		const userNativeTokenBalance = await provider.getBalance(
+			targetUser.address
+		);
 
 		if (userNativeTokenBalance.isZero()) {
-			console.log(`>ガス代用のネイティブトークンを送金します`);
-
-			tx = {
-				chainId: chainId,
-				to: targetUsers[i].address,
-				value: ethers.utils.parseEther("0.001"),
-				data: "",
-				gasPrice: "0x218711a00",
-				gasLimit: "0x5208",
-			};
-
-			signedTx = await signer.signTransaction(tx, path);
-			sendTx = await provider.sendTransaction(signedTx);
-
-			console.log(`
-				-> https://${networkType}.etherscan.io/tx/${sendTx.hash}
-			`);
-			await sendTx.wait(3);
-			console.log(`>ガス代用のネイティブトークンの送金完了`);
+			if (
+				await confirm(
+					`>UserId[${targetUser.id}]:${targetUser.address}はガス代用のネイティブトークンを所有していません。ガス代を送金しますか？`
+				)
+			) {
+				tx = {
+					chainId: chainId,
+					data: "",
+					gasLimit: ethers.BigNumber.from("300000"),
+					gasPrice: ethers.utils.parseUnits("1.5", "gwei"),
+					nonce: await provider.getTransactionCount(
+						adminAddress,
+						"pending"
+					),
+					to: targetUser.address,
+					value: ethers.utils.parseEther("0.001"),
+				};
+				await signAndSendTransaction(
+					tx,
+					signer,
+					provider,
+					adminPath,
+					"ガス代の送金"
+				);
+			} else {
+				console.info(">ガス代送金の処理が拒否されました。");
+				exit();
+			}
 		}
-
-		const allowance = await jpycV1Contract.allowance(
-			targetUsers[i].address,
-			adminAddress
-		);
 
 		let iface: ethers.utils.Interface = new ethers.utils.Interface([
 			"function approve(address spender, uint256 amount)",
@@ -121,79 +123,136 @@ const main = async () => {
 		]);
 		let functionData: string;
 
-		if (allowance.isZero()) {
-			console.log(">利用者のJPYCを管理者にAPPROVEします");
+		const allowance = await jpycV1Contract.allowance(
+			targetUser.address,
+			adminAddress
+		);
 
-			functionData = iface.encodeFunctionData("approve", [
+		if (allowance.isZero()) {
+			if (
+				await confirm(
+					`>${targetUser.address}のJPYCは管理者アドレスにAPPROVEされていません。APPROVEを行いますか？`
+				)
+			) {
+				functionData = iface.encodeFunctionData("approve", [
+					adminAddress,
+					"100000000000000000000000000000000000000000000",
+				]);
+
+				tx = {
+					chainId: chainId,
+					data: functionData,
+					gasLimit: ethers.BigNumber.from("300000"),
+					gasPrice: ethers.utils.parseUnits("1.5", "gwei"),
+					nonce: await provider.getTransactionCount(
+						targetUser.address,
+						"pending"
+					),
+					to: contractAddress,
+					value: "",
+				};
+				await signAndSendTransaction(
+					tx,
+					signer,
+					provider,
+					userPath,
+					"APPROVE"
+				);
+			} else {
+				console.info(">APPROVEの処理が拒否されました。");
+				exit();
+			}
+		}
+
+		const balance = await jpycV1Contract.balanceOf(targetUser.address);
+
+		if (
+			await confirm(
+				`> UserId[${targetUser.id}](${
+					targetUser.address
+				})に${ethers.utils.formatUnits(
+					ethers.BigNumber.from(balance),
+					18
+				)}JPYCあります。回収作業を行いますか？送り先アドレス:${adminAddress}`
+			)
+		) {
+			functionData = iface.encodeFunctionData("transferFrom", [
+				targetUser.address,
 				adminAddress,
-				"100000000000000000000000000000000000000000000",
+				balance,
 			]);
-			//Todo: approveする額の決定
 
 			tx = {
 				chainId: chainId,
-				from: targetUsers[i].address,
+				data: functionData,
+				gasLimit: ethers.BigNumber.from("300000"),
+				gasPrice: ethers.utils.parseUnits("1.5", "gwei"),
+				nonce: await provider.getTransactionCount(
+					adminAddress,
+					"pending"
+				),
 				to: contractAddress,
 				value: "",
-				data: functionData,
-				gasPrice: ethers.utils.parseUnits("1.1", "gwei"),
-				gasLimit: 500000, //Todo: gaslimitの適正値は要調査
 			};
 
-			signedTx = await signer.signTransaction(tx, path);
-			sendTx = await provider.sendTransaction(signedTx);
-
-			console.log(
-				`-> https://${networkType}.etherscan.io/tx/${sendTx.hash}`
+			await signAndSendTransaction(
+				tx,
+				signer,
+				provider,
+				adminPath,
+				"JPYCの回収"
 			);
-			await sendTx.wait(3);
-			console.log(">APPROVE完了");
+		} else {
+			console.info(">JPYCの回収の処理が拒否されました。");
+			exit();
 		}
-
-		const balance = await jpycV1Contract.balanceOf(targetUsers[i].address);
-
-		console.info(
-			`> ${balance}JPYCをUserId ${targetUsers[i]}(${targetUsers[i].address})から${adminAddress}に送金します`
-		);
-
-		functionData = iface.encodeFunctionData("transferFrom", [
-			targetUsers[i].address,
-			adminAddress,
-			balance,
-		]);
-
-		tx = {
-			chainId: chainId,
-			from: targetUsers[i].address,
-			to: contractAddress,
-			value: "",
-			data: functionData,
-			gasPrice: ethers.utils.parseUnits("1.1", "gwei"),
-			gasLimit: 500000, //Todo: gaslimitの適正値は要調査
-		};
-
-		signedTx = await signer.signTransaction(tx, path);
-		sendTx = await provider.sendTransaction(signedTx);
-
-		console.log(`-> https://${networkType}.etherscan.io/tx/${sendTx.hash}`);
-		await sendTx.wait(3);
-		console.log(">JPYCの送金完了");
 	}
 };
 
-const confirm = async (message: string, withdrawRequest: WithdrawRequest) => {
+const signAndSendTransaction = async (
+	tx: ethers.providers.TransactionRequest,
+	signer: LedgerSigner,
+	provider: ethers.providers.AlchemyProvider,
+	path: string,
+	message: string
+) => {
+	let signedTx: string;
+	let sendTx: ethers.providers.TransactionResponse;
+	console.info("> Ledger でトランザクションに署名してください");
+	try {
+		signedTx = await signer.signTransaction(tx, path);
+		sendTx = await provider.sendTransaction(signedTx);
+	} catch (err) {
+		console.error(err);
+		console.info("> 処理に失敗しました、処理しなおしてください");
+
+		exit();
+	}
+
+	console.info(`> https://${networkType}.etherscan.io/tx/${sendTx.hash}`);
+
+	const result = await sendTx.wait(3);
+	if (!result.status) {
+		console.info(result);
+		console.info("> 処理に失敗しました、処理しなおしてください");
+		exit();
+	}
+	console.info("> トランザクションがネットワークに承認されました");
+	console.info(`>${message}完了`);
+	console.info("------------------");
+};
+
+const confirm = async (message: string) => {
 	const answer = await (await question(`> ${message} (y/n/e): `))
 		.trim()
 		.toLowerCase();
 
 	if (answer !== "y" && answer !== "n") {
 		console.info("------------------");
-		console.info("> 終了処理を行います");
 
-		withdrawRequest.status = WithdrawStatus.UNBUSY;
-		await withdrawRequest.save();
-
-		console.info("> 終了処理が完了しました");
+		console.info(
+			"> プロセスを終了します。気が向いたときに再開してください"
+		);
 		exit();
 	}
 
