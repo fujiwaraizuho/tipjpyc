@@ -96,11 +96,11 @@ const main = async () => {
 					chainId: chainId,
 					data: "",
 					gasLimit: ethers.BigNumber.from("300000"),
-					gasPrice: ethers.utils.parseUnits("1.5", "gwei"),
 					nonce: await provider.getTransactionCount(
 						adminAddress,
 						"pending"
 					),
+					type: 2,
 					to: targetUser.address,
 					value: ethers.utils.parseEther("0.001"),
 				};
@@ -136,21 +136,21 @@ const main = async () => {
 			) {
 				functionData = iface.encodeFunctionData("approve", [
 					adminAddress,
-					"100000000000000000000000000000000000000000000",
+					ethers.utils.parseUnits("10000000", 18),
 				]);
 
 				tx = {
 					chainId: chainId,
 					data: functionData,
 					gasLimit: ethers.BigNumber.from("300000"),
-					gasPrice: ethers.utils.parseUnits("1.5", "gwei"),
 					nonce: await provider.getTransactionCount(
 						targetUser.address,
 						"pending"
 					),
+					type: 2,
 					to: contractAddress,
-					value: "",
 				};
+
 				await signAndSendTransaction(
 					tx,
 					signer,
@@ -168,7 +168,7 @@ const main = async () => {
 
 		if (
 			await confirm(
-				`> UserId[${targetUser.id}](${
+				`UserId[${targetUser.id}](${
 					targetUser.address
 				})に${ethers.utils.formatUnits(
 					ethers.BigNumber.from(balance),
@@ -186,11 +186,11 @@ const main = async () => {
 				chainId: chainId,
 				data: functionData,
 				gasLimit: ethers.BigNumber.from("300000"),
-				gasPrice: ethers.utils.parseUnits("1.5", "gwei"),
 				nonce: await provider.getTransactionCount(
 					adminAddress,
 					"pending"
 				),
+				type: 2,
 				to: contractAddress,
 				value: "",
 			};
@@ -216,11 +216,11 @@ const signAndSendTransaction = async (
 	path: string,
 	message: string
 ) => {
-	let signedTx: string;
 	let sendTx: ethers.providers.TransactionResponse;
 	console.info("> Ledger でトランザクションに署名してください");
 	try {
-		signedTx = await signer.signTransaction(tx, path);
+		const populateTx = await signer.populateTransaction(tx);
+		const signedTx = await signer.signTransaction(populateTx, path);
 		sendTx = await provider.sendTransaction(signedTx);
 	} catch (err) {
 		console.error(err);
