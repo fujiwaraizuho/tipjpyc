@@ -141,7 +141,7 @@ const main = async () => {
 			if (isProduction()) {
 				await info(
 					"入金が完了しました",
-					`Amount: ${transaction.amount}JPYC\nTo: https://twitter.com/intent/user?user_id=${lockedDepositQueue.user.twitter_id}\n`,
+					`Amount: ${transaction.amount}JPYC\nTo: https://twitter.com/intent/user?user_id=${lockedDepositQueue.user.twitter_id}`,
 					`https://etherscan.io/tx/${lockedDepositQueue.txid}`
 				);
 			}
