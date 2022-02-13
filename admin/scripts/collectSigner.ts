@@ -1,6 +1,6 @@
 import { exit } from "process";
 import { createInterface } from "readline";
-import { createConnection, getRepository } from "typeorm";
+import { createConnection, getRepository, SimpleConsoleLogger } from "typeorm";
 import { danger } from "../../app/utils/discord";
 import {
 	WithdrawRequest,
@@ -54,38 +54,35 @@ const main = async () => {
 	// Todo : クエリーのやり方あってますか？
 	const users = await getRepository(User)
 		.createQueryBuilder("user")
-		.select("user.id")
+		.select(["user.id", "user.address"])
 		.getMany();
 
-	let userIds = [];
+	let targetUsers = [];
 	for (let i = 0; i < users.length; i++) {
-		const userId = users[i].id;
-		const path = `m/44'/60'/1'/${userId}`;
-		const userAddress = await signer.getAddress(path);
-
-		const userBalance = await jpycV1Contract.balanceOf(userAddress);
+		const userBalance = await jpycV1Contract.balanceOf(users[i].address);
 		if (Number(ethers.utils.formatUnits(userBalance, 18)) >= 50) {
-			userIds.push(userId);
+			targetUsers.push(users[i]);
 		}
 	}
 
-	if (!userIds.length) {
+	if (!targetUsers.length) {
 		console.info("> 回収できるJPYCはありません");
 		exit();
 	}
 
 	console.info("------------------");
-	console.log(`-> UserID[ ${userIds} ]からJPYCを回収します`);
+	console.log(`-> ${targetUsers.length}つの入金アドレスからJPYCを回収します`);
 
-	for (let i = 0; i < userIds.length; i++) {
+	for (let i = 0; i < targetUsers.length; i++) {
 		const adminPath = "m/44'/60'/0'/1";
 		const adminAddress = await signer.getAddress(adminPath);
 
-		const path = `m/44'/60'/1'/${userIds[i]}`;
-		const userAddress = await signer.getAddress(path);
+		const path = `m/44'/60'/1'/${targetUsers[i]}`;
 
 		const chainId = 4; // todo:環境変数にする？
-		const userNativeTokenBalance = await provider.getBalance(userAddress);
+		const userNativeTokenBalance = await provider.getBalance(
+			targetUsers[i].address
+		);
 
 		let tx: ethers.providers.TransactionRequest;
 		let signedTx: string;
@@ -96,12 +93,13 @@ const main = async () => {
 
 			tx = {
 				chainId: chainId,
-				to: userAddress,
+				to: targetUsers[i].address,
 				value: ethers.utils.parseEther("0.001"),
 				data: "",
 				gasPrice: "0x218711a00",
 				gasLimit: "0x5208",
 			};
+
 			signedTx = await signer.signTransaction(tx, path);
 			sendTx = await provider.sendTransaction(signedTx);
 
@@ -113,7 +111,7 @@ const main = async () => {
 		}
 
 		const allowance = await jpycV1Contract.allowance(
-			userAddress,
+			targetUsers[i].address,
 			adminAddress
 		);
 
@@ -134,7 +132,7 @@ const main = async () => {
 
 			tx = {
 				chainId: chainId,
-				from: userAddress,
+				from: targetUsers[i].address,
 				to: contractAddress,
 				value: "",
 				data: functionData,
@@ -152,21 +150,21 @@ const main = async () => {
 			console.log(">APPROVE完了");
 		}
 
-		const balance = await jpycV1Contract.balanceOf(userAddress);
+		const balance = await jpycV1Contract.balanceOf(targetUsers[i].address);
 
 		console.info(
-			`> ${balance}JPYCをUserId ${userIds[i]}(${userAddress})から${adminAddress}に送金します`
+			`> ${balance}JPYCをUserId ${targetUsers[i]}(${targetUsers[i].address})から${adminAddress}に送金します`
 		);
 
 		functionData = iface.encodeFunctionData("transferFrom", [
-			userAddress,
+			targetUsers[i].address,
 			adminAddress,
 			balance,
 		]);
 
 		tx = {
 			chainId: chainId,
-			from: userAddress,
+			from: targetUsers[i].address,
 			to: contractAddress,
 			value: "",
 			data: functionData,
@@ -181,6 +179,39 @@ const main = async () => {
 		await sendTx.wait(3);
 		console.log(">JPYCの送金完了");
 	}
+};
+
+const confirm = async (message: string, withdrawRequest: WithdrawRequest) => {
+	const answer = await (await question(`> ${message} (y/n/e): `))
+		.trim()
+		.toLowerCase();
+
+	if (answer !== "y" && answer !== "n") {
+		console.info("------------------");
+		console.info("> 終了処理を行います");
+
+		withdrawRequest.status = WithdrawStatus.UNBUSY;
+		await withdrawRequest.save();
+
+		console.info("> 終了処理が完了しました");
+		exit();
+	}
+
+	return answer === "y";
+};
+
+const question = (question: string): Promise<string> => {
+	const readlineInterface = createInterface({
+		input: process.stdin,
+		output: process.stdout,
+	});
+
+	return new Promise((resolve) => {
+		readlineInterface.question(question, (answer) => {
+			resolve(answer);
+			readlineInterface.close();
+		});
+	});
 };
 
 main();
