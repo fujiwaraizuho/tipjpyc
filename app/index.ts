@@ -74,12 +74,12 @@ const main = async () => {
 			tweet_id: data.id,
 		});
 
-		if (data.text.indexOf("@0x_mocha") === -1 || checkTweet !== undefined) {
+		if (data.text.indexOf("@tipjpyc") === -1 || checkTweet !== undefined) {
 			logger.info("-> Ignore tweet");
 			return;
 		}
 
-		const message = data.text.replace(/@0x_mocha ?/, "");
+		const message = data.text.replace(/@tipjpyc ?/, "");
 
 		logger.info(`-> Message: ${message}`);
 
