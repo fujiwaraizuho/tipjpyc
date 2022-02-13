@@ -1,6 +1,6 @@
 import { exit } from "process";
 import { createInterface } from "readline";
-import { createConnection } from "typeorm";
+import { createConnection, getRepository } from "typeorm";
 import { danger } from "../../app/utils/discord";
 import {
 	WithdrawRequest,
@@ -10,6 +10,7 @@ import { LedgerSigner } from "../../app/utils/ledger";
 import { ethers, providers } from "ethers";
 import { getConfig } from "../../app/utils/config";
 import jpycV1Abi from "../../abis/JPYCV1Abi";
+import { User } from "../../database/entity/User";
 
 const main = async () => {
 	console.info("--- Welcome to tipJPYC Withdraw Signer! ---");
@@ -49,9 +50,29 @@ const main = async () => {
 	);
 
 	console.info("------------------");
-	console.log("Cheking deposit history");
-	// Todo : deposit historyで特定の日時以降に保存されたデータのuserIdを取得する
-	const userIds = ["1", "3"];
+	console.log("> Cheking deposit address balance");
+	// Todo : クエリーのやり方あってますか？
+	const users = await getRepository(User)
+		.createQueryBuilder("user")
+		.select("user.id")
+		.getMany();
+
+	let userIds = [];
+	for (let i = 0; i < users.length; i++) {
+		const userId = users[i].id;
+		const path = `m/44'/60'/1'/${userId}`;
+		const userAddress = await signer.getAddress(path);
+
+		const userBalance = await jpycV1Contract.balanceOf(userAddress);
+		if (Number(ethers.utils.formatUnits(userBalance, 18)) >= 50) {
+			userIds.push(userId);
+		}
+	}
+
+	if (!userIds.length) {
+		console.info("> 回収できるJPYCはありません");
+		exit();
+	}
 
 	console.info("------------------");
 	console.log(`-> UserID[ ${userIds} ]からJPYCを回収します`);
@@ -96,15 +117,15 @@ const main = async () => {
 			adminAddress
 		);
 
-		let iface: ethers.utils.Interface;
+		let iface: ethers.utils.Interface = new ethers.utils.Interface([
+			"function approve(address spender, uint256 amount)",
+			"function transferFrom(address sender, address recipient, uint256 amount)",
+		]);
 		let functionData: string;
 
 		if (allowance.isZero()) {
 			console.log(">利用者のJPYCを管理者にAPPROVEします");
 
-			iface = new ethers.utils.Interface([
-				"function approve(address spender, uint256 amount)",
-			]);
 			functionData = iface.encodeFunctionData("approve", [
 				adminAddress,
 				"100000000000000000000000000000000000000000000",
@@ -137,9 +158,6 @@ const main = async () => {
 			`> ${balance}JPYCをUserId ${userIds[i]}(${userAddress})から${adminAddress}に送金します`
 		);
 
-		iface = new ethers.utils.Interface([
-			"function transferFrom(address sender, address recipient, uint256 amount)",
-		]);
 		functionData = iface.encodeFunctionData("transferFrom", [
 			userAddress,
 			adminAddress,
