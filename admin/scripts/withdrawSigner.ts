@@ -108,7 +108,7 @@ const main = async () => {
 				ethers.utils.parseUnits(String(withdrawRequest.amount))
 			);
 
-			tx.chainId = 4;
+			tx.chainId = Number(getConfig("NETWORK_ID"));
 			tx.gasLimit = ethers.BigNumber.from("300000");
 
 			console.info("> Ledger でトランザクションに署名してください");
