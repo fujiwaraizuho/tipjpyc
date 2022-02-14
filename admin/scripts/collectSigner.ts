@@ -1,6 +1,6 @@
 import { exit } from "process";
 import { createInterface } from "readline";
-import { createConnection, getRepository, SimpleConsoleLogger } from "typeorm";
+import { createConnection, getRepository } from "typeorm";
 import { danger } from "../../app/utils/discord";
 import { LedgerSigner } from "../../app/utils/ledger";
 import { ethers } from "ethers";
