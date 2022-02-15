@@ -1,6 +1,6 @@
 import { exit } from "process";
 import { createInterface } from "readline";
-import { createConnection, getRepository, SimpleConsoleLogger } from "typeorm";
+import { createConnection, getRepository } from "typeorm";
 import { danger } from "../../app/utils/discord";
 import { LedgerSigner } from "../../app/utils/ledger";
 import { ethers } from "ethers";
@@ -85,7 +85,7 @@ const main = async () => {
 		const targetUser = targetUsers[i];
 		const userPath = `m/44'/60'/0'/${targetUser.id}`;
 
-		const chainId = 4;
+		const chainId = Number(getConfig("NETWORK_ID"));
 
 		let tx: ethers.providers.TransactionRequest;
 
