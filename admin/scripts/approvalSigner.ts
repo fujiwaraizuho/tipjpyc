@@ -7,7 +7,9 @@ import jpycV1Abi from "../../abis/JPYCV1Abi";
 const PATH = "m/44'/60'/1'/0";
 
 const APPROVAL_AMOUNT = "10000000";
-const NUMBER_OF_USER = 100;
+
+const START_USERID = Number(process.argv[2]);
+const END_USERID = Number(process.argv[3]);
 
 const NETWORK_ID = 137;
 const NETWORK_TYPE = "matic";
@@ -29,14 +31,16 @@ const main = async () => {
 		getConfig("JPYC_CONTRACT_ADDRESS"),
 		jpycV1Abi
 	);
-	console.info(`-> Approval from ${NUMBER_OF_USER} deposit address.`);
+	console.info(
+		`-> Approval from ${END_USERID - START_USERID + 1} deposit address.`
+	);
 	console.info("--------------------");
 
-	for (let i = 1; i <= NUMBER_OF_USER; i++) {
+	for (let i = START_USERID; i <= END_USERID; i++) {
 		const userPath = `m/44'/60'/0'/${i}`;
 		const userAddress = await signer.getAddress(userPath);
 
-		console.info(`-> Start pproval: ${i}/${NUMBER_OF_USER}`);
+		console.info(`-> Start pproval: ${i}/${END_USERID}`);
 		console.info(`[${i}] Address = ${userAddress}`);
 
 		const tx = await jpycV1Contract.populateTransaction.approve(
@@ -46,13 +50,19 @@ const main = async () => {
 
 		tx.chainId = NETWORK_ID;
 		tx.gasLimit = ethers.BigNumber.from("300000");
+		tx.nonce = await provider.getTransactionCount(userAddress);
+		tx.type = 2;
 
 		console.info("> Ledger でトランザクションに署名してください");
 
 		let sendTx: ethers.providers.TransactionResponse;
 
 		try {
-			const unsignedTx = await signer.signTransaction(tx, userPath);
+			const populateTx = await signer.populateTransaction(tx);
+			const unsignedTx = await signer.signTransaction(
+				populateTx,
+				userPath
+			);
 			sendTx = await provider.sendTransaction(unsignedTx);
 		} catch (err) {
 			console.error(err);
