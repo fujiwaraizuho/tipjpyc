@@ -9,6 +9,7 @@ import jpycV1Abi from "../../abis/JPYCV1Abi";
 import { User } from "../../database/entity/User";
 
 const networkType = getConfig("NETWORK_TYPE");
+const explorerUrl = getConfig("EXPLORER_URL");
 
 const main = async () => {
 	console.info("--- Welcome to tipJPYC Withdraw Signer! ---");
@@ -112,7 +113,7 @@ const main = async () => {
 					"ガス代の送金"
 				);
 			} else {
-				console.info(">ガス代送金の処理が拒否されました。");
+				console.info("> ガス代送金の処理が拒否されました。");
 				exit();
 			}
 		}
@@ -131,7 +132,7 @@ const main = async () => {
 		if (allowance.isZero()) {
 			if (
 				await confirm(
-					`>${targetUser.address}のJPYCは管理者アドレスにAPPROVEされていません。APPROVEを行いますか？`
+					`> ${targetUser.address}のJPYCは管理者アドレスにAPPROVEされていません。APPROVEを行いますか？`
 				)
 			) {
 				functionData = iface.encodeFunctionData("approve", [
@@ -159,7 +160,7 @@ const main = async () => {
 					"APPROVE"
 				);
 			} else {
-				console.info(">APPROVEの処理が拒否されました。");
+				console.info("> APPROVEの処理が拒否されました。");
 				exit();
 			}
 		}
@@ -203,7 +204,7 @@ const main = async () => {
 				"JPYCの回収"
 			);
 		} else {
-			console.info(">JPYCの回収の処理が拒否されました。");
+			console.info("> JPYCの回収の処理が拒否されました。");
 			exit();
 		}
 	}
@@ -229,7 +230,7 @@ const signAndSendTransaction = async (
 		exit();
 	}
 
-	console.info(`> https://${networkType}.etherscan.io/tx/${sendTx.hash}`);
+	console.info(`> ${explorerUrl}/tx/${sendTx.hash}`);
 
 	const result = await sendTx.wait(3);
 	if (!result.status) {

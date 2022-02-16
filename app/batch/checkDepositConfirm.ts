@@ -15,6 +15,8 @@ import {
 } from "../../database/entity/DepositHistory";
 import { isProduction } from "../utils/env";
 
+const explorerUrl = getConfig("EXPLORER_URL");
+
 const main = async () => {
 	const logger = getLogger();
 
@@ -142,7 +144,7 @@ const main = async () => {
 				await info(
 					"入金が完了しました",
 					`Amount: ${transaction.amount}JPYC\nTo: https://twitter.com/intent/user?user_id=${lockedDepositQueue.user.twitter_id}`,
-					`https://etherscan.io/tx/${lockedDepositQueue.txid}`
+					`${explorerUrl}/tx/${lockedDepositQueue.txid}`
 				);
 			}
 		} catch (err) {

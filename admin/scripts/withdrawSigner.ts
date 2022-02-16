@@ -1,7 +1,7 @@
 import { exit } from "process";
 import { createInterface } from "readline";
 import { createConnection } from "typeorm";
-import { danger } from "../../app/utils/discord";
+import { info, danger, warning } from "../../app/utils/discord";
 import {
 	WithdrawRequest,
 	WithdrawStatus,
@@ -13,6 +13,8 @@ import jpycV1Abi from "../../abis/JPYCV1Abi";
 import { AlchemyProvider } from "@ethersproject/providers";
 import TwitterAPI from "twitter-api-v2";
 import { CommandType, Transaction } from "../../database/entity/Transaction";
+
+const explorerUrl = getConfig("EXPLORER_URL");
 
 const main = async () => {
 	console.info("--- Welcome to tipJPYC Withdraw Signer! ---");
@@ -129,7 +131,7 @@ const main = async () => {
 				continue;
 			}
 
-			console.info(`> https://rinkeby.etherscan.io/tx/${sendTx.hash}`);
+			console.info(`> ${explorerUrl}/tx/${sendTx.hash}`);
 
 			const result = await sendTx.wait(1);
 
@@ -154,8 +156,14 @@ const main = async () => {
 			console.info("> WithdrawRequest を更新しました");
 
 			await client.v2.reply(
-				`${withdrawRequest.amount}JPYC の出金が完了しました!\nhttps://rinkeby.etherscan.io/tx/${sendTx.hash}`,
+				`${withdrawRequest.amount}JPYC の出金が完了しました!\n${explorerUrl}/tx/${sendTx.hash}`,
 				withdrawRequest.transaction.tweet_id
+			);
+
+			await info(
+				"出金処理が完了しました",
+				`ID: ${withdrawRequest.id}\nUserID: ${withdrawRequest.transaction.user_id}\nAddress: ${withdrawRequest.address}\nAmount: ${withdrawRequest.amount}JPYC\nFee: ${withdrawRequest.tax}JPYC`,
+				`${explorerUrl}/tx/${sendTx.hash}`
 			);
 
 			console.info("> 出金処理が完了しました");
@@ -180,6 +188,11 @@ const main = async () => {
 			await client.v2.reply(
 				`${withdrawRequest.amount}JPYC の出金が承認されませんでした。\nご不明な点があれば DM までご連絡ください。`,
 				withdrawRequest.transaction.tweet_id
+			);
+
+			await warning(
+				"出金リクエストを非承認しました",
+				`ID: ${withdrawRequest.id}\nUserID: ${withdrawRequest.transaction.user_id}\nAddress: ${withdrawRequest.address}\nAmount: ${withdrawRequest.amount}JPYC\nFee: ${withdrawRequest.tax}JPYC`
 			);
 
 			console.info("> 返金処理が完了しました");
