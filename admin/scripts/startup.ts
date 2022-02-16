@@ -24,6 +24,9 @@ const main = async () => {
 
 	const adminAddress = privateNode.derivePath("m/44'/60'/1'/0").address;
 	console.log(`AdminAddress (m/44'/60'/1'/0): \n${adminAddress}`);
+
+	const donationAddress = privateNode.derivePath("m/44'/60'/1'/1").address;
+	console.log(`DonationAddress (m/44'/60'/1'/1): \n${donationAddress}`);
 };
 
 main();
