@@ -11,6 +11,11 @@ const main = async () => {
 
 	const xpub = publicNode.extendedKey;
 
+	console.log(
+		`MainAddress XPUB (m/44'/60'/0'/0/0): \n${
+			publicNode.derivePath("0/0").address
+		}\n`
+	);
 	console.log(`DepositAddress XPUB (m/44'/60'/0'): \n${xpub}\n`);
 
 	const firstUserAddress = publicNode.derivePath("1").address;
