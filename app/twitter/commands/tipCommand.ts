@@ -68,7 +68,7 @@ const exec = async (
 		return;
 	}
 
-	if (!Number.isSafeInteger(Number(amount))) {
+	if (Number(amount) == 0 || !Number.isSafeInteger(Number(amount))) {
 		await client.v2.reply(
 			`申し訳ありません!\n投げ銭の額が正の整数でないか不正です。`,
 			tweet.id

@@ -16,11 +16,11 @@ import "reflect-metadata";
 /* eslint-disable no-irregular-whitespace */
 /* 正規表現に全角空白を含む必要があるため */
 export const cmdRegExps = {
-	tip: /(tip)( |　)+(?<to>@([A-z0-9_]+))( |　)+(?<amount>([1-9]\d*)(\.?\d+))?/,
+	tip: /(tip)( |　)+(?<to>@([A-z0-9_]+))( |　)+(?<amount>(\d+))/,
 	deposit: /(deposit)/,
 	balance: /(balance)/,
 	withdraw:
-		/(withdraw)( |　)+((?<amount>([1-9]\d*)(\.?\d+))?)( |　)+(?<address>0x[a-fA-F0-9]{40})?/,
+		/(withdraw)( |　)+(?<amount>(\d+))( |　)+(?<address>0x[a-fA-F0-9]{40})/,
 };
 
 const main = async () => {

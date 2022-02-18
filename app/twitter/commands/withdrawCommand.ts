@@ -36,7 +36,7 @@ const exec = async (
 	const { amount, address } = message.match(cmdRegExps.withdraw).groups;
 	const tax = getConfig("FEE_AMOUNT");
 
-	if (!Number.isSafeInteger(Number(amount))) {
+	if (Number(amount) == 0 || !Number.isSafeInteger(Number(amount))) {
 		await client.v2.reply(
 			`申し訳ありません!\n出金額が正の整数でないか不正です。`,
 			tweet.id
