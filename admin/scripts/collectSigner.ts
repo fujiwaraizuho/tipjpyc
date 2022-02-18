@@ -58,7 +58,14 @@ const main = async () => {
 	let targetUsers = [];
 	for (let i = 0; i < users.length; i++) {
 		const userBalance = await jpycV1Contract.balanceOf(users[i].address);
-
+		console.info(
+			`UserId[
+				${users[i].id}
+			]の入金用アドレス（${users[i].address}）に${ethers.utils.formatUnits(
+				userBalance,
+				18
+			)}JPYCあります`
+		);
 		if (Number(ethers.utils.formatUnits(userBalance, 18)) >= 50) {
 			targetUsers.push(users[i]);
 		}
