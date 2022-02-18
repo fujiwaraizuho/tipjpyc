@@ -5,8 +5,7 @@ import { exit } from "process";
 const DEPOSIT_XPUB_ADDRESS =
 	"xpub6D7JHGFsqhn9BXGTwKn9NHhNt8wrHqBfRqV4cWUhaWtEnMZjfLwpwRWUKMdpGSdyetfYPrNRUsL5uM4enNekMip4dUSR98cS4miDsrdYeV1";
 
-const MNEMONIC =
-	"sugar write space awake fold vague great tail rib gallery then claim tiger crater boring airport oyster please clutch amused easily transfer suggest amateur";
+const PRIVATE_KEY = "";
 const PATH = "m/44'/60'/1'/0";
 
 const FEE_PER_USER = "0.01";
@@ -20,7 +19,7 @@ const main = async () => {
 	console.info("--------- Transfer GAS Script ---------");
 
 	const provider = new AlchemyProvider(NETWORK_TYPE, ALCHEMY_API_KEY);
-	const signer = ethers.Wallet.fromMnemonic(MNEMONIC, PATH);
+	const signer = new ethers.Wallet(PRIVATE_KEY);
 
 	console.info(`-> SignerAddress: ${signer.address} (${PATH})`);
 
