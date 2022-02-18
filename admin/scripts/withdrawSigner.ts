@@ -179,7 +179,7 @@ const main = async () => {
 			const transaction = new Transaction();
 
 			transaction.user_id = withdrawRequest.transaction.user_id;
-			transaction.amount = withdrawRequest.amount;
+			transaction.amount = withdrawRequest.amount + withdrawRequest.tax;
 			transaction.command_type = CommandType.OTHER;
 			transaction.description = "出金非承認による返金";
 
