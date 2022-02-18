@@ -2,11 +2,9 @@ import { AlchemyProvider } from "@ethersproject/providers";
 import { ethers } from "ethers";
 import { exit } from "process";
 
-const DEPOSIT_XPUB_ADDRESS =
-	"xpub6D7JHGFsqhn9BXGTwKn9NHhNt8wrHqBfRqV4cWUhaWtEnMZjfLwpwRWUKMdpGSdyetfYPrNRUsL5uM4enNekMip4dUSR98cS4miDsrdYeV1";
+const DEPOSIT_XPUB_ADDRESS = "";
 
 const PRIVATE_KEY = "";
-const PATH = "m/44'/60'/1'/0";
 
 const FEE_PER_USER = "0.01";
 const NUMBER_OF_USER = 100;
@@ -21,7 +19,7 @@ const main = async () => {
 	const provider = new AlchemyProvider(NETWORK_TYPE, ALCHEMY_API_KEY);
 	const signer = new ethers.Wallet(PRIVATE_KEY);
 
-	console.info(`-> SignerAddress: ${signer.address} (${PATH})`);
+	console.info(`-> SignerAddress: ${signer.address}`);
 
 	const balance = await provider.getBalance(signer.address);
 	const formatedBalance = ethers.utils.formatEther(balance);
