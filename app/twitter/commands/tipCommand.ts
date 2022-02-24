@@ -156,7 +156,7 @@ const exec = async (
 	);
 
 	await client.v2.reply(
-		`@${execUser.username} さんから @${toTwitterUser.data.username} さんに ${amount} JPYCの投げ銭です! `,
+		`${execUser.username} さんから ${toTwitterUser.data.username} さんに ${amount} JPYCの投げ銭です! `,
 		tweet.id
 	);
 };
