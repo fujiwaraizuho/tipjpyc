@@ -1,5 +1,5 @@
 import { exit } from "process";
-import { createConnection, getConnection } from "typeorm";
+import { Connection, createConnection } from "typeorm";
 import { danger } from "../utils/discord";
 import { getLogger } from "../utils/logger";
 import { ethers } from "ethers";
@@ -15,13 +15,14 @@ const main = async () => {
 	logger.info("--- Welcome to tipJPYC Deposit Listener! ---");
 
 	let contract: ethers.Contract;
+	let connection: Connection;
 
 	const rpc = getConfig("RPC_WSS");
 	const contractAddess = getConfig("JPYC_CONTRACT_ADDRESS");
 
 	try {
 		logger.info("-> Try connection database...");
-		await createConnection();
+		connection = await createConnection();
 
 		const webSocketProvider = new ethers.providers.WebSocketProvider(rpc);
 		contract = new ethers.Contract(
@@ -76,7 +77,7 @@ const main = async () => {
 				`-> Proccessing deposit tx: ${amount} JPYC to ${user.id} (${event.transactionHash})`
 			);
 
-			const queryRunner = getConnection().createQueryRunner();
+			const queryRunner = connection.createQueryRunner();
 			await queryRunner.connect();
 
 			await queryRunner.startTransaction();
@@ -94,6 +95,11 @@ const main = async () => {
 				await queryRunner.commitTransaction();
 			} catch (err) {
 				await queryRunner.rollbackTransaction();
+
+				if (err.code === "ER_DUP_ENTRY") {
+					logger.info("-> Through Duplicate Trasnsaction");
+					return;
+				}
 
 				logger.error(err);
 				await danger("Process Error!", JSON.stringify(err));
