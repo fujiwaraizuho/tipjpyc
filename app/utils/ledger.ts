@@ -47,8 +47,8 @@ export class LedgerSigner extends BaseLedgerSigner {
 			nonce: tx.nonce
 				? ethers.BigNumber.from(tx.nonce).toNumber()
 				: undefined,
-			maxFeePerGas: tx.maxFeePerGas || undefined,
-			maxPriorityFeePerGas: tx.maxPriorityFeePerGas || undefined,
+			// maxFeePerGas: tx.maxFeePerGas || undefined,
+			// maxPriorityFeePerGas: tx.maxPriorityFeePerGas || undefined,
 			type: tx.type,
 			to: tx.to || undefined,
 			value: tx.value || undefined,
