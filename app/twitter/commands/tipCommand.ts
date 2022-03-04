@@ -156,7 +156,15 @@ const exec = async (
 	);
 
 	await client.v2.reply(
-		`${execUser.username} さんから ${toTwitterUser.data.username} さんに ${amount} JPYCの投げ銭です! `,
+		[
+			`${execUser.username} さんから ${toTwitterUser.data.username} さんに ${amount} JPYCの投げ銭です!`,
+			`${toTwitterUser.data.username} さん!\n${execUser.username} さんから ${amount} JPYCの贈り物です!`,
+			`${toTwitterUser.data.username} さん、プレゼントが届きました!\n${execUser.username} さんから ${amount} JPYC!`,
+			`まいど!\n${execUser.username} さんから ${amount} JPYCのお届けものです!`,
+			`${execUser.username} さんから ${toTwitterUser.data.username} さんへ ${amount} JPYCのtipがきたよ♪`,
+			`${toTwitterUser.data.username} さん、あなたに ${execUser.username} さんからの応援 ${amount} JPYC が届いています。\nhttps://note.com/tipjpyc/n/nbc48a7a0a84e`,
+			`${execUser.username} さんは tip を唱えた!\n${toTwitterUser.data.username} さんの残高が ${amount} JPYC回復した!`,
+		][Math.floor(Math.random() * 7)],
 		tweet.id
 	);
 };
