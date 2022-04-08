@@ -107,11 +107,13 @@ const main = async () => {
 
 			const tx = await jpycV1Contract.populateTransaction.transfer(
 				withdrawRequest.address,
-				ethers.utils.parseUnits(String(withdrawRequest.amount))
+				ethers.utils.parseUnits(String(withdrawRequest.amount), 18)
 			);
 
 			tx.chainId = Number(getConfig("NETWORK_ID"));
 			tx.gasLimit = ethers.BigNumber.from("300000");
+			tx.maxPriorityFeePerGas = ethers.utils.parseUnits("40", "gwei");
+			tx.maxFeePerGas = ethers.utils.parseUnits("90", "gwei");
 
 			console.info("> Ledger でトランザクションに署名してください");
 
