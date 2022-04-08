@@ -24,7 +24,7 @@ const main = async () => {
 		"はろー",
 		"てすてす",
 		"ケロケロ",
-		"状況はいかがですか？ オーバー",
+		"現状報告を！オーバー",
 	];
 	const mainTextNumber = Math.floor(Math.random() * mainText.length);
 
@@ -43,6 +43,8 @@ const main = async () => {
 		const createdTweet = { id: "1512334092477472770" };
 		console.log(`-> Tweeted: ${createdTweet}`);
 		// logger.info(`-> Tweeted: ${createdTweet}`);
+
+		await wait(5);
 
 		const { data: mentionedTweetsToTestAccount } =
 			await client.v2.userMentionTimeline(testAccount.id, {
@@ -80,6 +82,11 @@ const main = async () => {
 		await danger("Database Connection ERROR!", JSON.stringify(err));
 		exit();
 	}
+};
+
+const wait = async (seconds: number) => {
+	const milliseconds = seconds * 1000;
+	return new Promise((resolve) => setTimeout(resolve, milliseconds));
 };
 
 main();
