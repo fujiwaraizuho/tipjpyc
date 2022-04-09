@@ -17,14 +17,14 @@ const main = async () => {
 	});
 
 	const { data: testAccount } = await client.v2.me();
-	console.log(testAccount);
+	logger.info(`UserName: $${testAccount.username}, ID: ${testAccount.id}`);
 
 	const mainText = [
 		"おーい",
 		"はろー",
 		"てすてす",
-		"ケロケロ",
-		"現状報告を！オーバー",
+		"やっほー",
+		"現状報告お願いします。オーバー",
 	];
 	const mainTextNumber = Math.floor(Math.random() * mainText.length);
 
@@ -39,12 +39,11 @@ const main = async () => {
 	const tweetText = `@tipjpyc balance\n${mainText[mainTextNumber]} ${subtext}`;
 
 	try {
-		// const { data: createdTweet } = await client.v2.tweet(tweetText);
-		const createdTweet = { id: "1512334092477472770" };
-		console.log(`-> Tweeted: ${createdTweet}`);
-		// logger.info(`-> Tweeted: ${createdTweet}`);
+		const { data: createdTweet } = await client.v2.tweet(tweetText);
+		logger.info(`Tweeted: ${createdTweet.text}, ID: ${createdTweet.id}`);
 
-		await wait(5);
+		logger.info(`-> Waiting 60 seconds`);
+		await wait(60);
 
 		const { data: mentionedTweetsToTestAccount } =
 			await client.v2.userMentionTimeline(testAccount.id, {
@@ -52,19 +51,20 @@ const main = async () => {
 				expansions: ["referenced_tweets.id", "author_id"],
 			});
 
-		console.log(mentionedTweetsToTestAccount);
-		// logger.info(`-> Get Mentioned Tweets`);
+		logger.info(`-> Fetched Mentioned Tweets`);
 
 		for (let t = 0; t < mentionedTweetsToTestAccount.data.length; t++) {
+			const mentionedTweet = mentionedTweetsToTestAccount.data[t];
 			const isReplayed =
-				createdTweet.id ===
-				mentionedTweetsToTestAccount.data[t].referenced_tweets[0].id;
-			const isTipJPYCAccount =
-				mentionedTweetsToTestAccount.data[t].author_id;
+				createdTweet.id === mentionedTweet.referenced_tweets[0].id;
+			const isTipJPYCAccount = mentionedTweet.author_id;
 
 			if (isReplayed && isTipJPYCAccount) {
 				logger.info(
-					`-> TweetID and UserID are matched. Stream API is correctly working`
+					`Replayed Tweet: ${mentionedTweet.text}, ID: ${mentionedTweet.id}`
+				);
+				logger.info(
+					`TweetID and UserID are matched. Stream API is correctly working`
 				);
 				exit(0);
 			}
