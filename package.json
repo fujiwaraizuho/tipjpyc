@@ -12,6 +12,7 @@
 		"start:listener": "ts-node app/listener/depositListener.ts",
 		"start:batch": "ts-node app/batch/checkDepositConfirm.ts",
 		"admin:withdraw": "ts-node admin/scripts/withdrawSigner.ts",
+		"admin:checkStream": "ts-node admin/scripts/checkStreamConnection.ts",
 		"dev": "nodemon app/index.ts",
 		"ts-node": "ts-node",
 		"eslint": "eslint app/**/*.ts",
